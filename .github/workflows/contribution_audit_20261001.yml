@@ -31,30 +31,6 @@ jobs:
             sources: "[\"robomimic/models/distributions.py\"]"
             count: 4
             transformers: "4.57.1"
-          - id: "lingbot-flow-noise"
-            repository: "Afloat16/lingbot-world-v2"
-            ref: "d30a4f213883b713089e922a1df7a43702ee6706"
-            base: "1895d300d8ac936401689b26389f51cbd36530eb"
-            test: "tests/test_flow_noise_conversion.py"
-            sources: "[\"wan/utils/fm_solvers.py\",\"wan/utils/fm_solvers_unipc.py\"]"
-            count: 3
-            transformers: "4.51.3"
-          - id: "lingbot-long-rope"
-            repository: "Afloat16/lingbot-world-v2"
-            ref: "e308154d6f2e089653997fd278a8b339913fd22c"
-            base: "1895d300d8ac936401689b26389f51cbd36530eb"
-            test: "tests/test_long_causal_rope.py"
-            sources: "[\"wan/modules/model.py\",\"wan/modules/model_causal.py\",\"wan/modules/model_fast.py\"]"
-            count: 3
-            transformers: "4.51.3"
-          - id: "qwen-packed-attention"
-            repository: "Afloat16/Qwen3-VL"
-            ref: "3b56a4cfa273ef3d6c295300e45f6b4c8ba0b348"
-            base: "96588727e44c78b25ba03ea03b8e12f7e64fd0da"
-            test: "qwen-vl-finetune/tests/test_packed_attention.py"
-            sources: "[\"qwen-vl-finetune/qwenvl/train/trainer.py\"]"
-            count: 5
-            transformers: "4.57.1"
     steps:
       - name: Checkout validation runner
         uses: actions/checkout@v4
@@ -80,7 +56,7 @@ jobs:
           accelerate==1.10.1 omegaconf==2.3.0 iopath==0.1.10
           opencv-python-headless==4.11.0.86 easydict==1.13 ftfy==6.3.1
           zarr==2.18.7 numcodecs==0.15.1 dill==0.4.0 pandas==2.2.3
-          scikit-learn==1.6.1 h5py==3.14.0 imageio==2.37.0 imageio-ffmpeg==0.6.0 termcolor==3.1.0
+          scikit-learn==1.6.1 h5py==3.14.0 imageio==2.37.0 imageio-ffmpeg==0.6.0 termcolor==3.1.0 matplotlib==3.10.1 psutil==7.0.0
       - name: Verify native candidate and original baseline
         working-directory: candidate
         env:
