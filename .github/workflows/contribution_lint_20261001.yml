@@ -1,0 +1,67 @@
+name: DINOv3 contribution lint audit
+on:
+  push:
+    branches:
+      - validation/contribution-lint-20261001
+permissions:
+  contents: read
+jobs:
+  lint:
+    name: ${{ matrix.id }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: "dinov3-sigloss"
+            ref: "3855dd06587b2ee2b838298fdc2a9f04b603130c"
+            test: "dinov3/tests/test_depth_sigloss.py"
+            source: "dinov3/eval/depth/loss.py"
+          - id: "dinov3-masked-gradients"
+            ref: "0ce40db239a3c57f6b0f4e8a907aa232560442aa"
+            test: "dinov3/tests/test_depth_gradient_loss.py"
+            source: "dinov3/eval/depth/loss.py"
+          - id: "dinov3-sampler-resume"
+            ref: "5ea58ff94f52127e58db026dfefa75302aba0791"
+            test: "dinov3/tests/test_sharded_sampler_resume.py"
+            source: "dinov3/data/samplers.py"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Afloat16/dinov3
+          ref: ${{ matrix.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install exact upstream development dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Run upstream ruff linter
+        run: ruff check dinov3
+      - name: Run upstream ruff formatter
+        if: always()
+        run: ruff format --diff dinov3
+      - name: Report upstream docstring coverage
+        if: always()
+        run: docstr-coverage dinov3
+      - name: Run upstream mypy
+        if: always()
+        run: |
+          mypy --txt-report .
+          [ -f index.txt ] && cat index.txt
+      - name: Run upstream pylint
+        if: always()
+        run: pylint --exit-zero dinov3
+      - name: Prepare changed files with the native formatter
+        if: always()
+        run: |
+          ruff format "${{ matrix.source }}" "${{ matrix.test }}"
+          python -c 'import json, pathlib; files=["${{ matrix.source }}","${{ matrix.test }}"]; pathlib.Path("formatted.json").write_text(json.dumps({f:pathlib.Path(f).read_text() for f in files}))'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-${{ matrix.id }}
+          path: |
+            formatted.json
+            index.txt
