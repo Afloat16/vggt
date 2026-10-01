@@ -29,7 +29,7 @@ def collect():
     types = run(["mypy", "--txt-report", "."])
     mypy = []
     for line in (types.stdout + types.stderr).splitlines():
-        match = re.match(r"^(.*?):\\d+(?::\\d+)?: error: (.*)$", line)
+        match = re.match(r"^(.*?):[0-9]+(?::[0-9]+)?: error: (.*)$", line)
         if match:
             mypy.append((match.group(1), match.group(2)))
     if types.returncode and not mypy:
