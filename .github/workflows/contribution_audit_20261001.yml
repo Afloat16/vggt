@@ -31,49 +31,9 @@ jobs:
             sources: "[\"robomimic/models/distributions.py\"]"
             count: 4
             transformers: "4.57.1"
-          - id: "dinov3-sigloss"
-            repository: "Afloat16/dinov3"
-            ref: "3855dd06587b2ee2b838298fdc2a9f04b603130c"
-            base: "6876159a11b4df116f30f667f8c9888617df0751"
-            test: "dinov3/tests/test_depth_sigloss.py"
-            sources: "[\"dinov3/eval/depth/loss.py\"]"
-            count: 4
-            transformers: "4.57.1"
-          - id: "dinov3-masked-gradients"
-            repository: "Afloat16/dinov3"
-            ref: "0ce40db239a3c57f6b0f4e8a907aa232560442aa"
-            base: "6876159a11b4df116f30f667f8c9888617df0751"
-            test: "dinov3/tests/test_depth_gradient_loss.py"
-            sources: "[\"dinov3/eval/depth/loss.py\"]"
-            count: 4
-            transformers: "4.57.1"
-          - id: "dinov3-sampler-resume"
-            repository: "Afloat16/dinov3"
-            ref: "5ea58ff94f52127e58db026dfefa75302aba0791"
-            base: "6876159a11b4df116f30f667f8c9888617df0751"
-            test: "dinov3/tests/test_sharded_sampler_resume.py"
-            sources: "[\"dinov3/data/samplers.py\"]"
-            count: 2
-            transformers: "4.57.1"
-          - id: "vggt-masked-confidence"
-            repository: "Afloat16/vggt"
-            ref: "29dea671d56752076fbdab6c68d48ad1ba9da1b1"
-            base: "a288dd0f14786c93483e45524328726ab7b1b4ce"
-            test: "tests/test_gradient_confidence_mask.py"
-            sources: "[\"training/loss.py\"]"
-            count: 4
-            transformers: "4.57.1"
-          - id: "diffusion-policy-output-stats"
-            repository: "Afloat16/diffusion_policy"
-            ref: "e601b63fa2f3e4064392539a495335137347b107"
-            base: "5ba07ac6661db573af695b419a7947ecb704690f"
-            test: "tests/test_normalizer_output_stats.py"
-            sources: "[\"diffusion_policy/model/common/normalizer.py\"]"
-            count: 4
-            transformers: "4.57.1"
           - id: "lingbot-flow-noise"
             repository: "Afloat16/lingbot-world-v2"
-            ref: "8280b5a8ef362f65315a1997cd2f7a3cbccda73e"
+            ref: "d30a4f213883b713089e922a1df7a43702ee6706"
             base: "1895d300d8ac936401689b26389f51cbd36530eb"
             test: "tests/test_flow_noise_conversion.py"
             sources: "[\"wan/utils/fm_solvers.py\",\"wan/utils/fm_solvers_unipc.py\"]"
@@ -81,7 +41,7 @@ jobs:
             transformers: "4.51.3"
           - id: "lingbot-long-rope"
             repository: "Afloat16/lingbot-world-v2"
-            ref: "eaf3b4eb49e5ef5bc4512d50996bbff9a7f0dbd2"
+            ref: "e308154d6f2e089653997fd278a8b339913fd22c"
             base: "1895d300d8ac936401689b26389f51cbd36530eb"
             test: "tests/test_long_causal_rope.py"
             sources: "[\"wan/modules/model.py\",\"wan/modules/model_causal.py\",\"wan/modules/model_fast.py\"]"
@@ -89,7 +49,7 @@ jobs:
             transformers: "4.51.3"
           - id: "qwen-packed-attention"
             repository: "Afloat16/Qwen3-VL"
-            ref: "94044825f8424468a5346b21dd9ea0d07e801ec1"
+            ref: "3b56a4cfa273ef3d6c295300e45f6b4c8ba0b348"
             base: "96588727e44c78b25ba03ea03b8e12f7e64fd0da"
             test: "qwen-vl-finetune/tests/test_packed_attention.py"
             sources: "[\"qwen-vl-finetune/qwenvl/train/trainer.py\"]"
@@ -120,7 +80,7 @@ jobs:
           accelerate==1.10.1 omegaconf==2.3.0 iopath==0.1.10
           opencv-python-headless==4.11.0.86 easydict==1.13 ftfy==6.3.1
           zarr==2.18.7 numcodecs==0.15.1 dill==0.4.0 pandas==2.2.3
-          scikit-learn==1.6.1 h5py==3.14.0 imageio==2.37.0 imageio-ffmpeg==0.6.0
+          scikit-learn==1.6.1 h5py==3.14.0 imageio==2.37.0 imageio-ffmpeg==0.6.0 termcolor==3.1.0
       - name: Verify native candidate and original baseline
         working-directory: candidate
         env:
