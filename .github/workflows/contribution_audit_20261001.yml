@@ -15,21 +15,29 @@ jobs:
       max-parallel: 10
       matrix:
         include:
-          - id: "robomimic-discrete-samples"
-            repository: "Afloat16/robomimic"
-            ref: "c63a5864c66a2b81f6649c1ecf9aa6f3efc78dd2"
-            base: "d309eaecc18acf4152a830a895a6984b8ac71b05"
-            test: "tests/test_discrete_value_distribution.py"
-            sources: "[\"robomimic/models/distributions.py\"]"
+          - id: "dinov3-sigloss"
+            repository: "Afloat16/dinov3"
+            ref: "3206b0dec3828d2ebad68b7262ccbeb087921281"
+            base: "6876159a11b4df116f30f667f8c9888617df0751"
+            test: "dinov3/tests/test_depth_sigloss.py"
+            sources: "[\"dinov3/eval/depth/loss.py\"]"
             count: 4
             transformers: "4.57.1"
-          - id: "robomimic-tanh-jacobian"
-            repository: "Afloat16/robomimic"
-            ref: "740dbced4495352b958d50ca64644edfcf654840"
-            base: "d309eaecc18acf4152a830a895a6984b8ac71b05"
-            test: "tests/test_tanh_wrapped_distribution.py"
-            sources: "[\"robomimic/models/distributions.py\"]"
+          - id: "dinov3-masked-gradients"
+            repository: "Afloat16/dinov3"
+            ref: "ae330aa2cf3a7ae3f1342307b8fd4ba34a29c527"
+            base: "6876159a11b4df116f30f667f8c9888617df0751"
+            test: "dinov3/tests/test_depth_gradient_loss.py"
+            sources: "[\"dinov3/eval/depth/loss.py\"]"
             count: 4
+            transformers: "4.57.1"
+          - id: "dinov3-sampler-resume"
+            repository: "Afloat16/dinov3"
+            ref: "304b31fceeb48ed25ca1027955fc1b1ad2a170a6"
+            base: "6876159a11b4df116f30f667f8c9888617df0751"
+            test: "dinov3/tests/test_sharded_sampler_resume.py"
+            sources: "[\"dinov3/data/samplers.py\"]"
+            count: 2
             transformers: "4.57.1"
     steps:
       - name: Checkout validation runner
