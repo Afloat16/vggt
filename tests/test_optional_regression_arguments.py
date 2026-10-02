@@ -12,9 +12,9 @@ class OptionalRegressionArgumentsTest(unittest.TestCase):
         mask = torch.tensor([[[[True, False], [True, True]]]])
         return prediction, target, mask
 
-    def test_defaults_match_unit_confidence_without_gradient_loss(self):
+    def test_missing_confidence_matches_explicit_unit_confidence(self):
         prediction, target, mask = self.inputs()
-        actual = regression_loss(prediction, target, mask)
+        actual = regression_loss(prediction, target, mask, gradient_loss_fn="")
         expected = regression_loss(prediction, target, mask, conf=torch.ones_like(mask, dtype=prediction.dtype),
                                    gradient_loss_fn="")
         for actual_component, expected_component in zip(actual, expected):
@@ -25,7 +25,7 @@ class OptionalRegressionArgumentsTest(unittest.TestCase):
 
     def test_missing_confidence_uses_unweighted_distance_objective(self):
         prediction, target, mask = self.inputs()
-        confidence_loss, gradient_loss, regression = regression_loss(prediction, target, mask, gamma=0.7)
+        confidence_loss, gradient_loss, regression = regression_loss(prediction, target, mask, gamma=0.7, gradient_loss_fn="")
         expected = torch.linalg.vector_norm(prediction[mask] - target[mask], dim=-1).mean()
         torch.testing.assert_close(regression, expected)
         torch.testing.assert_close(confidence_loss, 0.7 * expected)
@@ -40,7 +40,7 @@ class OptionalRegressionArgumentsTest(unittest.TestCase):
 
     def test_default_objective_preserves_prediction_gradients(self):
         prediction, target, mask = self.inputs()
-        confidence_loss, _, regression = regression_loss(prediction, target, mask)
+        confidence_loss, _, regression = regression_loss(prediction, target, mask, gradient_loss_fn="")
         gradient = torch.autograd.grad(confidence_loss + regression, prediction)[0]
         difference = prediction.detach()[mask] - target[mask]
         expected = torch.zeros_like(prediction)

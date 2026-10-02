@@ -319,7 +319,6 @@ def regression_loss(pred, gt, mask, conf=None, gradient_loss_fn=None, gamma=1.0,
     loss_grad = 0
 
     # Prepare confidence for gradient loss if needed
-    gradient_loss_fn = gradient_loss_fn or ""
     if "conf" in gradient_loss_fn and conf is not None:
         to_feed_conf = conf.reshape(bb*ss, hh, ww)
     else:
