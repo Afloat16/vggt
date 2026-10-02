@@ -30,9 +30,10 @@ def run(mode):
         'failures': [t.id() for t, _ in result.failures],
         'errors': [t.id() for t, _ in result.errors],
         'imports_failed': import_failures,
+        'skipped': [t.id() for t, _ in result.skipped],
         'sources': {p: hashlib.sha256(Path(p).read_bytes()).hexdigest() for p in sources},
     }
-    if import_failures or result.testsRun != args.count:
+    if import_failures or result.skipped or result.testsRun != args.count:
         raise RuntimeError(f'{mode}: failed to load the complete native test suite')
     if mode == 'candidate' and not result.wasSuccessful():
         raise RuntimeError('Candidate regression tests failed')
@@ -58,9 +59,10 @@ try:
         'r=unittest.TextTestRunner(verbosity=2).run(s); '
         'd={"tests":r.testsRun,"failures":[t.id() for t,_ in r.failures],'
         '"errors":[t.id() for t,_ in r.errors],'
-        '"imports_failed":[t.id() for t,_ in r.errors if t.__class__.__name__=="_FailedTest"]}; '
+        '"imports_failed":[t.id() for t,_ in r.errors if t.__class__.__name__=="_FailedTest"],'
+        '"skipped":[t.id() for t,_ in r.skipped]}; '
         'pathlib.Path("baseline-result.json").write_text(json.dumps(d)); '
-        'raise SystemExit(1 if r.wasSuccessful() or d["imports_failed"] else 0)'
+        'raise SystemExit(1 if r.wasSuccessful() or d["imports_failed"] or d["skipped"] else 0)'
     )
     completed = subprocess.run([sys.executable, '-B', '-c', code], env=env)
     baseline = json.loads(Path('baseline-result.json').read_text())

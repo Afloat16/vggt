@@ -1,65 +1,73 @@
 name: Core contribution regression audit
 on:
   push:
-    branches:
-      - validation/contribution-audit-20261002
+    branches: [validation/contribution-audit-20261002]
 permissions:
   contents: read
 jobs:
   regression:
     name: ${{ matrix.id }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       max-parallel: 10
       matrix:
         include:
-          - id: "diffusion-negative-episode-slice"
-            repository: "Afloat16/diffusion_policy"
-            ref: "316d6300574bbc5ec8710962c2f35666a20a15cb"
-            base: "5ba07ac6661db573af695b419a7947ecb704690f"
-            test: "tests/test_replay_episode_slice.py"
-            sources: "[\"diffusion_policy/common/replay_buffer.py\"]"
-            count: 3
-            transformers: "4.57.1"
-          - id: "diffusion-replay-append-validation"
-            repository: "Afloat16/diffusion_policy"
-            ref: "69f63bf86a095381dec85825231f174f08311b81"
-            base: "5ba07ac6661db573af695b419a7947ecb704690f"
-            test: "tests/test_replay_append_validation.py"
-            sources: "[\"diffusion_policy/common/replay_buffer.py\"]"
-            count: 4
-            transformers: "4.57.1"
-          - id: "robomimic-logsumexp-limits"
-            repository: "Afloat16/robomimic"
-            ref: "51a63bd49a2bbd0e38904a44145f621cc14e195e"
-            base: "d309eaecc18acf4152a830a895a6984b8ac71b05"
-            test: "tests/test_log_sum_exp_boundaries.py"
-            sources: "[\"robomimic/utils/loss_utils.py\"]"
-            count: 4
-            transformers: "4.57.1"
-          - id: "robomimic-terminal-returns"
-            repository: "Afloat16/robomimic"
-            ref: "aa57446e7f21150852e43dc5f6d25546b3de48c6"
-            base: "d309eaecc18acf4152a830a895a6984b8ac71b05"
-            test: "tests/test_n_step_terminal_returns.py"
-            sources: "[\"robomimic/utils/loss_utils.py\",\"robomimic/algo/cql.py\",\"robomimic/algo/bcq.py\",\"robomimic/algo/td3_bc.py\"]"
-            count: 4
-            transformers: "4.57.1"
-          - id: "robomimic-weighted-generator"
-            repository: "Afloat16/robomimic"
-            ref: "70a7a6352e2628f2c441a16810a4b0c3b6cf143e"
-            base: "d309eaecc18acf4152a830a895a6984b8ac71b05"
-            test: "tests/test_weighted_sampler_generator.py"
-            sources: "[\"robomimic/utils/dataset.py\"]"
-            count: 4
-            transformers: "4.57.1"
+          - {"id":"act-valid-reconstruction-mean","repository":"Afloat16/act","ref":"298afa3a03a227906b8f81fca9decc9417c2ca9b","base":"742c753c0d4a5d87076c8f69e5628c79a8cc5488","test":"tests/test_act_masked_reconstruction.py","sources":"[\"policy.py\"]","count":3,"dependencies":"[\"numpy==1.26.4\",\"numba==0.61.2\",\"zarr==2.18.7\",\"numcodecs==0.15.1\",\"h5py==3.14.0\",\"einops==0.8.1\",\"dill==0.4.0\",\"IPython==8.37.0\"]","vendor":false,"pythonpath":".:detr"}
+          - {"id":"act-variable-episode-stats","repository":"Afloat16/act","ref":"45c43ac8be97425562c6391783e8e7ee01d71a6f","base":"742c753c0d4a5d87076c8f69e5628c79a8cc5488","test":"tests/test_episode_norm_stats.py","sources":"[\"utils.py\"]","count":3,"dependencies":"[\"numpy==1.26.4\",\"numba==0.61.2\",\"zarr==2.18.7\",\"numcodecs==0.15.1\",\"h5py==3.14.0\",\"einops==0.8.1\",\"dill==0.4.0\",\"IPython==8.37.0\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"act-zero-temporal-actions","repository":"Afloat16/act","ref":"15ae97802f75266b27ed8e4f90558fb85545080c","base":"742c753c0d4a5d87076c8f69e5628c79a8cc5488","test":"tests/test_temporal_aggregation_zeros.py","sources":"[\"imitate_episodes.py\"]","count":3,"dependencies":"[\"numpy==1.26.4\",\"numba==0.61.2\",\"zarr==2.18.7\",\"numcodecs==0.15.1\",\"h5py==3.14.0\",\"einops==0.8.1\",\"dill==0.4.0\",\"IPython==8.37.0\",\"opencv-python-headless==4.11.0.86\",\"matplotlib==3.10.1\",\"tqdm==4.67.1\"]","vendor":false,"pythonpath":".:detr"}
+          - {"id":"libero-attention-stochastic-depth","repository":"Afloat16/LIBERO","ref":"a1ee77f1685c4c2176097de917b3f30d35d0bcb6","base":"8f1084e3132a39270c3a13ebe37270a43ece2a01","test":"tests/test_transformer_attention_drop_path.py","sources":"[\"libero/lifelong/models/modules/transformer_modules.py\"]","count":3,"dependencies":"[\"numpy==1.26.4\",\"numba==0.61.2\",\"zarr==2.18.7\",\"numcodecs==0.15.1\",\"h5py==3.14.0\",\"einops==0.8.1\",\"dill==0.4.0\",\"IPython==8.37.0\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"libero-replay-memory-bound","repository":"Afloat16/LIBERO","ref":"30396220b5c8492bc0118090977ed813563d9a36","base":"8f1084e3132a39270c3a13ebe37270a43ece2a01","test":"tests/test_truncated_replay_dataset.py","sources":"[\"libero/lifelong/datasets.py\"]","count":4,"dependencies":"[\"numpy==1.26.4\",\"numba==0.61.2\",\"zarr==2.18.7\",\"numcodecs==0.15.1\",\"h5py==3.14.0\",\"einops==0.8.1\",\"dill==0.4.0\",\"IPython==8.37.0\",\"robomimic==0.3.0\",\"Pillow==11.3.0\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"robomimic-terminal-returns","repository":"Afloat16/robomimic","ref":"636075edf92897b4284d0b2f4ed2fff8da5a7547","base":"d309eaecc18acf4152a830a895a6984b8ac71b05","test":"tests/test_n_step_terminal_returns.py","sources":"[\"robomimic/utils/loss_utils.py\",\"robomimic/algo/cql.py\",\"robomimic/algo/bcq.py\",\"robomimic/algo/td3_bc.py\"]","count":5,"dependencies":"[\"numpy==1.26.4\",\"numba==0.61.2\",\"zarr==2.18.7\",\"numcodecs==0.15.1\",\"h5py==3.14.0\",\"einops==0.8.1\",\"dill==0.4.0\",\"IPython==8.37.0\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dinov3-koleo-self-exclusion","repository":"Afloat16/dinov3","ref":"ba7ec421a0890e2092bb4977a7b66a2e7b1882f7","base":"6876159a11b4df116f30f667f8c9888617df0751","test":"dinov3/tests/test_koleo_self_exclusion.py","sources":"[\"dinov3/loss/koleo_loss.py\"]","count":3,"dependencies":"[\"torch\",\"numpy\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dinov3-multistep-group-phase","repository":"Afloat16/dinov3","ref":"7565e6e758f87a9f27b70fc982093e26802ab018","base":"6876159a11b4df116f30f667f8c9888617df0751","test":"dinov3/tests/test_depth_multistep_groups.py","sources":"[\"dinov3/eval/depth/schedulers.py\"]","count":4,"dependencies":"[\"torch\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dinov3-scheduler-total-iters","repository":"Afloat16/dinov3","ref":"7072882639b14f8d1828e9143990d719eca908d3","base":"6876159a11b4df116f30f667f8c9888617df0751","test":"dinov3/tests/test_depth_scheduler_total_iters.py","sources":"[\"dinov3/eval/depth/schedulers.py\"]","count":3,"dependencies":"[\"torch\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dinov3-silog-stability","repository":"Afloat16/dinov3","ref":"9017ba24d7475d5091f21131afeaff019de4a9b4","base":"6876159a11b4df116f30f667f8c9888617df0751","test":"dinov3/tests/test_depth_silog_stability.py","sources":"[\"dinov3/eval/depth/metrics.py\"]","count":4,"dependencies":"[\"torch\",\"numpy\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dust3r-homogeneous-grid-axis","repository":"Afloat16/dust3r","ref":"df8e177374551017da057010d053bc175688d98e","base":"4c24a6ebf04809f2cfe59915e51779c8984aaa40","test":"tests/test_homogeneous_grid_axis.py","sources":"[\"dust3r/utils/geometry.py\"]","count":3,"dependencies":"[\"torch\",\"numpy\",\"scipy\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dust3r-projective-transform","repository":"Afloat16/dust3r","ref":"8eb9700c4606e61aec89c9c2f5ad3549d24f8749","base":"4c24a6ebf04809f2cfe59915e51779c8984aaa40","test":"tests/test_projective_transform.py","sources":"[\"dust3r/utils/geometry.py\"]","count":3,"dependencies":"[\"torch\",\"numpy\",\"scipy\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dust3r-single-map-factor","repository":"Afloat16/dust3r","ref":"dc8dc31c9e5dff5cb4bb9c7b2a7e1881fc07443c","base":"4c24a6ebf04809f2cfe59915e51779c8984aaa40","test":"tests/test_single_map_normalization_factor.py","sources":"[\"dust3r/utils/geometry.py\"]","count":3,"dependencies":"[\"torch\",\"numpy\",\"scipy\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dust3r-unmasked-point-count","repository":"Afloat16/dust3r","ref":"eaea767cc9f7549354fed3545fd1530f84e37f94","base":"4c24a6ebf04809f2cfe59915e51779c8984aaa40","test":"tests/test_unmasked_point_count.py","sources":"[\"dust3r/utils/geometry.py\"]","count":4,"dependencies":"[\"torch\",\"numpy\",\"scipy\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"gsplat-broadcast-masked-mean","repository":"Afloat16/gsplat","ref":"a1cefe463bfa461aa599712272c9ba40ebf10288","base":"512d366b67073d77ca099ede742683c165dfc23b","test":"tests/test_broadcast_masked_mean.py","sources":"[\"gsplat/losses.py\"]","count":4,"dependencies":"[\"torch\",\"numpy\",\"rich\",\"pillow\",\"imageio\",\"scikit-learn\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"vggt-masked-normal-points","repository":"Afloat16/vggt","ref":"a309090609eeb054c950cdfa3c19b3ac1df3f592","base":"a288dd0f14786c93483e45524328726ab7b1b4ce","test":"tests/test_masked_normal_points.py","sources":"[\"training/loss.py\"]","count":3,"dependencies":"[\"torch\",\"numpy\",\"iopath\"]","vendor":false,"pythonpath":".:training"}
+          - {"id":"vggt-optional-regression-arguments","repository":"Afloat16/vggt","ref":"e4de8627204836d8c8bfd8cc0f786b28173ac77b","base":"a288dd0f14786c93483e45524328726ab7b1b4ce","test":"tests/test_optional_regression_arguments.py","sources":"[\"training/loss.py\"]","count":4,"dependencies":"[\"torch\",\"numpy\",\"iopath\"]","vendor":false,"pythonpath":".:training"}
+          - {"id":"qwen-frame-list-timing","repository":"Afloat16/Qwen3-VL","ref":"7e53bb14d8bd37a3221c2a287683e2fa1c90bc66","base":"96588727e44c78b25ba03ea03b8e12f7e64fd0da","test":"qwen-vl-utils/tests/test_frame_list_timing.py","sources":"[\"qwen-vl-utils/src/qwen_vl_utils/vision_process.py\"]","count":4,"dependencies":"[\"torch==2.6.0\",\"torchvision==0.21.0\",\"numpy\",\"pillow\",\"requests\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"qwen-mathvision-safe-grading","repository":"Afloat16/Qwen3-VL","ref":"66e179ae47984ef56a71e76748205e245b87eb16","base":"96588727e44c78b25ba03ea03b8e12f7e64fd0da","test":"evaluation/MathVision/tests/test_safe_grading.py","sources":"[\"evaluation/MathVision/eval_utils.py\",\"evaluation/MathVision/common_utils.py\"]","count":6,"dependencies":"[\"pandas\",\"pillow\",\"requests\",\"latex2sympy2\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"qwen-transparent-images","repository":"Afloat16/Qwen3-VL","ref":"17f4e353e2c3ea4e815673c5935a9524033dea40","base":"96588727e44c78b25ba03ea03b8e12f7e64fd0da","test":"qwen-vl-utils/tests/test_transparency.py","sources":"[\"qwen-vl-utils/src/qwen_vl_utils/vision_process.py\"]","count":4,"dependencies":"[\"torch==2.6.0\",\"torchvision==0.21.0\",\"numpy\",\"pillow\",\"requests\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"qwen-video-rope-timing","repository":"Afloat16/Qwen3-VL","ref":"32cf8015311e30a5feaf2db28d1053286339808d","base":"96588727e44c78b25ba03ea03b8e12f7e64fd0da","test":"qwen-vl-finetune/tests/test_video_rope_timing.py","sources":"[\"qwen-vl-finetune/qwenvl/data/data_processor.py\"]","count":3,"dependencies":"[\"torch==2.6.0\",\"transformers==4.57.1\",\"numpy\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"ddp-dpmpp-self-conditioning","repository":"Afloat16/denoising-diffusion-pytorch","ref":"9802d4277a7383ba31dc1e39eca3e2a036e313a8","base":"c8155b1dc622e3f1ef0d53dc6e5a570ca105bcec","test":"tests/test_edm_dpmpp_self_condition.py","sources":"[\"denoising_diffusion_pytorch/elucidated_diffusion.py\"]","count":2,"dependencies":"[\"torch\",\"torchvision\",\"einops>=0.8.0\",\"accelerate\",\"ema-pytorch>=0.4.2\",\"pillow\",\"pytorch-fid\",\"scipy\",\"numpy\",\"tqdm\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"vq-latent-frozen-movement","repository":"Afloat16/vector-quantize-pytorch","ref":"8470426d5a55ebbe853a085d802f8978c072fb9b","base":"4103bf2c7be993b6e0ac21d88684818c9880c478","test":"tests/test_latent_frozen_movement.py","sources":"[\"vector_quantize_pytorch/latent_quantization.py\"]","count":4,"dependencies":"[\"torch\",\"einops>=0.8.0\",\"einx>=0.3.0\",\"torch-einops-utils>=0.1.29\",\"loguru\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"vq-latent-learned-codec","repository":"Afloat16/vector-quantize-pytorch","ref":"ebf443651d7015868acfd9fc38c5889c89877347","base":"4103bf2c7be993b6e0ac21d88684818c9880c478","test":"tests/test_latent_learned_codec.py","sources":"[\"vector_quantize_pytorch/latent_quantization.py\"]","count":3,"dependencies":"[\"torch\",\"einops>=0.8.0\",\"einx>=0.3.0\",\"torch-einops-utils>=0.1.29\",\"loguru\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"vq-lfq-distributed-mean","repository":"Afloat16/vector-quantize-pytorch","ref":"a060d4124562f40a8e6340a780f5152e514eef6b","base":"4103bf2c7be993b6e0ac21d88684818c9880c478","test":"tests/test_lfq_distributed_mean.py","sources":"[\"vector_quantize_pytorch/lookup_free_quantization.py\"]","count":2,"dependencies":"[\"torch\",\"einops>=0.8.0\",\"einx>=0.3.0\",\"torch-einops-utils>=0.1.29\",\"loguru\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"vq-lfq-small-entropy-sample","repository":"Afloat16/vector-quantize-pytorch","ref":"1847dcb11915b60879f0c3fe259b68869ad32541","base":"4103bf2c7be993b6e0ac21d88684818c9880c478","test":"tests/test_lfq_small_entropy_sample.py","sources":"[\"vector_quantize_pytorch/lookup_free_quantization.py\"]","count":2,"dependencies":"[\"torch\",\"einops>=0.8.0\",\"einx>=0.3.0\",\"torch-einops-utils>=0.1.29\",\"loguru\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"xt-continuous-feature-mean","repository":"Afloat16/x-transformers","ref":"705fb718bd40cc3469d725d81b44f22b62f8304b","base":"afee5e0e6540f243c151378bef8f36b642cb664c","test":"tests/test_continuous_batch_loss.py","sources":"[\"x_transformers/continuous.py\"]","count":3,"dependencies":"[\"torch\",\"einops>=0.8.0\",\"einx>=0.3.0\",\"torch-einops-utils>=0.1.29\",\"loguru\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"xt-looped-loss-expectation","repository":"Afloat16/x-transformers","ref":"eedb9db73117920f4efbfe5f4114934270c33ba4","base":"afee5e0e6540f243c151378bef8f36b642cb664c","test":"tests/test_looped_loss_expectation.py","sources":"[\"x_transformers/autoregressive_wrapper.py\"]","count":2,"dependencies":"[\"torch\",\"einops>=0.8.0\",\"einx>=0.3.0\",\"torch-einops-utils>=0.1.29\",\"loguru\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"xt-mdlm-positive-weights","repository":"Afloat16/x-transformers","ref":"9afe84a90795980335215845663950f02b20bb1a","base":"afee5e0e6540f243c151378bef8f36b642cb664c","test":"tests/test_mdlm_loss_weights.py","sources":"[\"x_transformers/nonautoregressive_wrapper.py\"]","count":2,"dependencies":"[\"torch\",\"einops>=0.8.0\",\"einx>=0.3.0\",\"torch-einops-utils>=0.1.29\",\"loguru\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"xt-probabilistic-rollout-axis","repository":"Afloat16/x-transformers","ref":"5b29a60ea8fb1e13845689d1425e65dcbe2f8def","base":"afee5e0e6540f243c151378bef8f36b642cb664c","test":"tests/test_probabilistic_rollout.py","sources":"[\"x_transformers/continuous.py\"]","count":2,"dependencies":"[\"torch\",\"einops>=0.8.0\",\"einx>=0.3.0\",\"torch-einops-utils>=0.1.29\",\"loguru\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"xt-xl-valid-chunk-weights","repository":"Afloat16/x-transformers","ref":"24c5065eec1b738ce400f3a37c4af2e9491e2ed7","base":"afee5e0e6540f243c151378bef8f36b642cb664c","test":"tests/test_xl_valid_chunk_loss.py","sources":"[\"x_transformers/xl_autoregressive_wrapper.py\"]","count":2,"dependencies":"[\"torch\",\"einops>=0.8.0\",\"einx>=0.3.0\",\"torch-einops-utils>=0.1.29\",\"loguru\",\"packaging\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"gaussian-colmap-utf8","repository":"Afloat16/gaussian-splatting","ref":"f933cd32d821831af358e823a6e2d3c6fbd3a439","base":"54c035f7834b564019656c3e3fcc3646292f727d","test":"tests/test_gaussian_colmap_utf8.py","sources":"[\"scene/colmap_loader.py\",\"utils/read_write_model.py\"]","count":3,"dependencies":"[\"numpy\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"gaussian-depth-calibration","repository":"Afloat16/gaussian-splatting","ref":"b96f545c451b62948843b270bb89db6df0988118","base":"54c035f7834b564019656c3e3fcc3646292f727d","test":"tests/test_gaussian_depth_calibration.py","sources":"[\"utils/make_depth_scale.py\"]","count":3,"dependencies":"[\"numpy\",\"opencv-python-headless\",\"joblib\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"hloc-binary-utf8","repository":"Afloat16/Hierarchical-Localization","ref":"6df3ff6ac83ee475064f2b8a30e4300be4b63b7c","base":"c13273bd0ecc2917a35910fd843712a1c6243193","test":"tests/test_hloc_binary_utf8.py","sources":"[\"hloc/utils/read_write_model.py\"]","count":3,"dependencies":"[\"numpy\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"hloc-retrieval-small-db","repository":"Afloat16/Hierarchical-Localization","ref":"1efa4d95f9d237c5bf67a568227093df142215a5","base":"c13273bd0ecc2917a35910fd843712a1c6243193","test":"tests/test_hloc_retrieval_small_db.py","sources":"[\"hloc/pairs_from_retrieval.py\"]","count":3,"dependencies":"[\"numpy\",\"h5py\",\"torch\",\"opencv-python-headless\",\"pycolmap==3.13.0\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"sam3d-log-normalization","repository":"Afloat16/sam-3d-objects","ref":"66363b62354ec1f476917f53a809b2555dfe8cd6","base":"f91db411c50efee93d8db7aeb323885650f6f722","test":"tests/test_sam3d_log_normalization.py","sources":"[\"sam3d_objects/data/dataset/tdfy/pose_target.py\"]","count":3,"dependencies":"[\"torch\",\"optree\",\"astor\",\"loguru\"]","vendor":true,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"sam3d-pose-batch","repository":"Afloat16/sam-3d-objects","ref":"a090f2b2b30ac49da510cab0a9766a702b83a036","base":"f91db411c50efee93d8db7aeb323885650f6f722","test":"tests/test_sam3d_pose_batch.py","sources":"[\"sam3d_objects/data/dataset/tdfy/pose_target.py\"]","count":3,"dependencies":"[\"torch\",\"optree\",\"astor\",\"loguru\"]","vendor":true,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"trellis2-balanced-tail","repository":"Afloat16/TRELLIS.2","ref":"167651ac9c01c43b3ded45f0e689a074a2434df0","base":"75fbf0183001ed9876c8dbb35de6b68552ee08bd","test":"tests/test_trellis2_balanced_tail.py","sources":"[\"trellis2/utils/data_utils.py\"]","count":3,"dependencies":"[\"numpy\",\"torch\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"trellis2-mesh-ply-layout","repository":"Afloat16/TRELLIS.2","ref":"3f3ef901b0c34b26a9c414b3bda65c756544d540","base":"75fbf0183001ed9876c8dbb35de6b68552ee08bd","test":"tests/test_trellis2_mesh_ply_layout.py","sources":"[\"trellis2/utils/mesh_utils.py\"]","count":4,"dependencies":"[\"numpy\",\"trimesh\",\"plyfile\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"trellis2-smooth-l1-zero","repository":"Afloat16/TRELLIS.2","ref":"bda7c9bdc428167a5398a919abaf5441ae8079e4","base":"75fbf0183001ed9876c8dbb35de6b68552ee08bd","test":"tests/test_trellis2_smooth_l1_zero.py","sources":"[\"trellis2/utils/loss_utils.py\"]","count":3,"dependencies":"[\"torch\",\"torchvision\",\"lpips==0.1.4\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"trellis2-voxel-ply-attributes","repository":"Afloat16/TRELLIS.2","ref":"a7cc7552904d2e74a9333b6daa8ce9edb5b534a3","base":"75fbf0183001ed9876c8dbb35de6b68552ee08bd","test":"tests/test_trellis2_voxel_ply_attributes.py","sources":"[\"o-voxel/o_voxel/io/ply.py\"]","count":3,"dependencies":"[\"torch\",\"numpy\",\"plyfile\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dreamer-consec-state","repository":"Afloat16/dreamerv3","ref":"466fe33168ec79da27b7f3c303e1ea7836690e8d","base":"e3f02248693a79dc8b0ebd62c93683888ddaccfe","test":"embodied/tests/test_consec_checkpoint.py","sources":"[\"embodied/core/streams.py\"]","count":3,"dependencies":"[\"numpy==1.26.4\",\"elements==3.19.1\",\"portal==3.5.0\",\"jax[cpu]==0.4.33\",\"chex==0.1.87\",\"optax==0.2.4\",\"ninjax==3.5.1\",\"scope==0.4.4\",\"einops\",\"gym==0.26.2\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dreamer-gym-termination","repository":"Afloat16/dreamerv3","ref":"106556a414f368d1806d62bf92c4ca47ac7b4afa","base":"e3f02248693a79dc8b0ebd62c93683888ddaccfe","test":"embodied/tests/test_from_gym_termination.py","sources":"[\"embodied/envs/from_gym.py\"]","count":3,"dependencies":"[\"numpy==1.26.4\",\"elements==3.19.1\",\"portal==3.5.0\",\"jax[cpu]==0.4.33\",\"chex==0.1.87\",\"optax==0.2.4\",\"ninjax==3.5.1\",\"scope==0.4.4\",\"einops\",\"gym==0.26.2\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dreamer-mixer","repository":"Afloat16/dreamerv3","ref":"a9dbdd660d982984a2e7dad87fadf29b141ba802","base":"e3f02248693a79dc8b0ebd62c93683888ddaccfe","test":"embodied/tests/test_stream_mixer.py","sources":"[\"embodied/core/streams.py\"]","count":3,"dependencies":"[\"numpy==1.26.4\",\"elements==3.19.1\",\"portal==3.5.0\",\"jax[cpu]==0.4.33\",\"chex==0.1.87\",\"optax==0.2.4\",\"ninjax==3.5.1\",\"scope==0.4.4\",\"einops\",\"gym==0.26.2\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dreamer-single-item-eviction","repository":"Afloat16/dreamerv3","ref":"00abec7f957e67c49436e5be9f56afdbb95d0fe2","base":"e3f02248693a79dc8b0ebd62c93683888ddaccfe","test":"embodied/tests/test_uniform_single_item.py","sources":"[\"embodied/core/selectors.py\"]","count":2,"dependencies":"[\"numpy==1.26.4\",\"elements==3.19.1\",\"portal==3.5.0\",\"jax[cpu]==0.4.33\",\"chex==0.1.87\",\"optax==0.2.4\",\"ninjax==3.5.1\",\"scope==0.4.4\",\"einops\",\"gym==0.26.2\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"dreamer-unbounded-actions","repository":"Afloat16/dreamerv3","ref":"061855a881f5ba0a3677177159281a837d6ae8fb","base":"e3f02248693a79dc8b0ebd62c93683888ddaccfe","test":"embodied/tests/test_normalize_action_bounds.py","sources":"[\"embodied/core/wrappers.py\"]","count":2,"dependencies":"[\"numpy==1.26.4\",\"elements==3.19.1\",\"portal==3.5.0\",\"jax[cpu]==0.4.33\",\"chex==0.1.87\",\"optax==0.2.4\",\"ninjax==3.5.1\",\"scope==0.4.4\",\"einops\",\"gym==0.26.2\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"vjepa-sampler-epoch","repository":"Afloat16/vjepa2","ref":"2d6880bc3f75bffcd7457d1403b44dd0db56cfbb","base":"204698b45b3712590f06245fbfba32d3be539812","test":"tests/datasets/test_weighted_sampler_epoch.py","sources":"[\"src/datasets/utils/weighted_sampler.py\"]","count":3,"dependencies":"[\"torch==2.6.0\",\"numpy==1.26.4\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
+          - {"id":"vjepa-singleton-mask","repository":"Afloat16/vjepa2","ref":"95a0eb452ecadb97bd02cd75fbba6579ad94bbc2","base":"204698b45b3712590f06245fbfba32d3be539812","test":"tests/models/test_singleton_mask_indices.py","sources":"[\"src/masks/multiseq_multiblock3d.py\"]","count":3,"dependencies":"[\"torch==2.6.0\",\"numpy==1.26.4\"]","vendor":false,"pythonpath":".:training:qwen-vl-finetune:qwen-vl-utils/src:detr:o-voxel:vendor/pytorch3d"}
     steps:
       - name: Checkout validation runner
         uses: actions/checkout@v4
         with:
           path: audit
+          persist-credentials: false
       - name: Checkout exact candidate commit
         uses: actions/checkout@v4
         with:
@@ -67,6 +75,14 @@ jobs:
           ref: ${{ matrix.ref }}
           fetch-depth: 0
           path: candidate
+          persist-credentials: false
+      - name: Checkout native PyTorch3D transforms
+        if: matrix.vendor
+        uses: actions/checkout@v4
+        with:
+          repository: facebookresearch/pytorch3d
+          ref: 88e182f989c80836f4bd744e0d9cb1852762ce01
+          path: candidate/vendor/pytorch3d
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
@@ -76,15 +92,26 @@ jobs:
       - name: Install native import dependencies
         run: >-
           python -m pip install numpy==1.26.4 scipy==1.15.3
-          einops==0.8.1 diffusers==0.35.1 transformers==${{ matrix.transformers }}
+          einops==0.8.1 diffusers==0.35.1 transformers==4.57.1
           accelerate==1.10.1 omegaconf==2.3.0 iopath==0.1.10
           opencv-python-headless==4.11.0.86 easydict==1.13 ftfy==6.3.1
           zarr==2.18.7 numcodecs==0.15.1 dill==0.4.0 pandas==2.2.3
-          scikit-learn==1.6.1 h5py==3.14.0 imageio==2.37.0 imageio-ffmpeg==0.6.0 termcolor==3.1.0 matplotlib==3.10.1 psutil==7.0.0 pycocotools==2.0.10 numba==0.61.2 IPython==8.37.0 packaging==25.0
+          scikit-learn==1.6.1 h5py==3.14.0 imageio==2.37.0 imageio-ffmpeg==0.6.0 termcolor==3.1.0 matplotlib==3.10.1 psutil==7.0.0
+      - name: Install candidate-specific dependencies
+        env:
+          EXTRA_REQUIREMENTS: ${{ matrix.dependencies }}
+        run: |
+          python - <<'PY'
+          import json, os, subprocess, sys
+          requirements = json.loads(os.environ["EXTRA_REQUIREMENTS"])
+          if requirements:
+              subprocess.check_call([sys.executable, "-m", "pip", "install", *requirements])
+          PY
       - name: Verify native candidate and original baseline
         working-directory: candidate
         env:
-          PYTHONPATH: .:training:qwen-vl-finetune
+          PYTHONPATH: ${{ matrix.pythonpath }}
+          LIDRA_SKIP_INIT: '1'
           OMP_NUM_THREADS: '1'
           MKL_NUM_THREADS: '1'
           CANDIDATE_TEST: ${{ matrix.test }}
