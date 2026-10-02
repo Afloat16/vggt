@@ -4,7 +4,6 @@
 # This source code is licensed under the license found in the
 # LICENSE file in the root directory of this source tree.
 
-import os
 import torch
 import numpy as np
 
@@ -33,10 +32,17 @@ def unproject_depth_map_to_point_map(
     if isinstance(intrinsics_cam, torch.Tensor):
         intrinsics_cam = intrinsics_cam.cpu().numpy()
 
+    if depth_map.ndim == 4:
+        if depth_map.shape[-1] != 1:
+            raise ValueError("depth_map must have a singleton channel axis")
+        depth_map = depth_map[..., 0]
+    if depth_map.ndim != 3:
+        raise ValueError("depth_map must have shape (S, H, W) or (S, H, W, 1)")
+
     world_points_list = []
     for frame_idx in range(depth_map.shape[0]):
         cur_world_points, _, _ = depth_to_world_coords_points(
-            depth_map[frame_idx].squeeze(-1), extrinsics_cam[frame_idx], intrinsics_cam[frame_idx]
+            depth_map[frame_idx], extrinsics_cam[frame_idx], intrinsics_cam[frame_idx]
         )
         world_points_list.append(cur_world_points)
     world_points_array = np.stack(world_points_list, axis=0)
@@ -222,7 +228,6 @@ def project_world_points_to_cam(
     device = world_points.device
     # with torch.autocast(device_type=device.type, dtype=torch.double):
     with torch.autocast(device_type=device.type, enabled=False):
-        N = world_points.shape[0]  # Number of points
         B = cam_extrinsics.shape[0]  # Batch size, i.e., number of cameras
         world_points_homogeneous = torch.cat(
             [world_points, torch.ones_like(world_points[..., 0:1])], dim=1
