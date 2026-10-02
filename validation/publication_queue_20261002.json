@@ -1,0 +1,707 @@
+[
+  {
+    "id": "act-valid-reconstruction-mean",
+    "repo": "tonyzhaozh/act",
+    "base": "main",
+    "branch": "fix/oct2-act-valid-reconstruction-mean",
+    "sha": "298afa3a03a227906b8f81fca9decc9417c2ca9b",
+    "title": "Normalize ACT reconstruction loss over valid action coordinates",
+    "body": "ACT masks padded actions but then averages L1 over every slot, including padding. Appending a padded suffix therefore lowers reconstruction loss while leaving KL unchanged, making the effective KL/reconstruction tradeoff depend on the amount of padding rather than kl_weight.\n\nSum L1 over valid timesteps and divide by the number of supervised action coordinates. Select valid operands before evaluating the loss, and return a differentiable zero for a fully padded batch. Tests run the native ACTPolicy with a fixed decoder, proving padding invariance, the exact masked loss and gradients, and a connected finite zero when all targets are padded.\n\nExact-head validation: all 3 native CPU regression tests pass at `298afa3a03a227906b8f81fca9decc9417c2ca9b`. Restoring the original production files at `742c753c0d4a5d87076c8f69e5628c79a8cc5488` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636728).",
+    "validation": {
+      "sha": "298afa3a03a227906b8f81fca9decc9417c2ca9b",
+      "run": 37027462867,
+      "job": 110905636728,
+      "tests": 3
+    }
+  },
+  {
+    "id": "act-zero-temporal-actions",
+    "repo": "tonyzhaozh/act",
+    "base": "main",
+    "branch": "fix/oct2-act-zero-temporal-actions",
+    "sha": "15ae97802f75266b27ed8e4f90558fb85545080c",
+    "title": "Keep zero-valued predictions in ACT temporal aggregation",
+    "body": "Temporal aggregation treats an action as populated only when every component is nonzero. A valid normalized joint position can be zero, so an entire predicted action is discarded when any joint is at its normalization mean. If all contributing chunks contain a zero component, the rollout silently emits a zero vector.\n\nSelect populated predictions using the query timestamps and chunk horizon. This retains valid zero components, excludes expired and future queries, and preserves the existing exponential weighting order.\n\nRegression tests exercise eval_bc through complete CPU rollout stubs with the native aggregation code. They cover zero-valued predictions, expired queries, and unchanged weighting for dense predictions. CUDA transfer and the simulator/policy boundaries are stubbed; the tests do not claim robot or MuJoCo execution.\n\nExact-head validation: all 3 native CPU regression tests pass at `15ae97802f75266b27ed8e4f90558fb85545080c`. Restoring the original production files at `742c753c0d4a5d87076c8f69e5628c79a8cc5488` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636727).",
+    "validation": {
+      "sha": "15ae97802f75266b27ed8e4f90558fb85545080c",
+      "run": 37027462867,
+      "job": 110905636727,
+      "tests": 3
+    }
+  },
+  {
+    "id": "libero-attention-stochastic-depth",
+    "repo": "Lifelong-Robot-Learning/LIBERO",
+    "base": "master",
+    "branch": "fix/oct2-libero-attention-stochastic-depth",
+    "sha": "a1ee77f1685c4c2176097de917b3f30d35d0bcb6",
+    "title": "Apply decoder stochastic depth to attention residuals during training",
+    "body": "TransformerDecoder uses self.drop_path for the feedforward residual, but calls the functional drop_path for attention without passing training or drop_prob. Those defaults disable stochastic depth, so attention bypasses the decoder's configured residual regularization in every mask branch.\n\nUse the same configured DropPath module for attention and feedforward. Tests load the complete native leaf module and check all three masking paths, identity input gradients when residual drop probability is one, zero parameter gradients for dropped residuals, and unchanged evaluation behavior.\n\nExact-head validation: all 3 native CPU regression tests pass at `a1ee77f1685c4c2176097de917b3f30d35d0bcb6`. Restoring the original production files at `8f1084e3132a39270c3a13ebe37270a43ece2a01` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636746).",
+    "validation": {
+      "sha": "a1ee77f1685c4c2176097de917b3f30d35d0bcb6",
+      "run": 37027462867,
+      "job": 110905636746,
+      "tests": 3
+    }
+  },
+  {
+    "id": "libero-replay-memory-bound",
+    "repo": "Lifelong-Robot-Learning/LIBERO",
+    "base": "master",
+    "branch": "fix/oct2-libero-replay-memory-bound",
+    "sha": "30396220b5c8492bc0118090977ed813563d9a36",
+    "title": "Bound replay memory datasets by the available task samples",
+    "body": "TruncatedSequenceDataset reports n_memories samples even when a task contains fewer sequences. ER and AGEM concatenate these wrappers into replay memories, so a small task can expose invalid indices and crash a replay data loader on a subsequent task.\n\nTreat the configured memory size as an upper bound and cap it at the underlying dataset length. Reject negative memory budgets at construction. Tests iterate a native DataLoader over a task shorter than its budget, preserve ordinary truncation, and cover empty tasks, zero budgets, and negative input.\n\nExact-head validation: all 4 native CPU regression tests pass at `30396220b5c8492bc0118090977ed813563d9a36`. Restoring the original production files at `8f1084e3132a39270c3a13ebe37270a43ece2a01` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636704).",
+    "validation": {
+      "sha": "30396220b5c8492bc0118090977ed813563d9a36",
+      "run": 37027462867,
+      "job": 110905636704,
+      "tests": 4
+    }
+  },
+  {
+    "id": "robomimic-logsumexp-limits",
+    "repo": "ARISE-Initiative/robomimic",
+    "base": "master",
+    "branch": "fix/oct2-robomimic-logsumexp-limits",
+    "sha": "51a63bd49a2bbd0e38904a44145f621cc14e195e",
+    "title": "Preserve infinite limits in log-space probability reductions",
+    "body": "The custom maximum-shift log_sum_exp evaluates -inf - -inf or inf - inf for an all-zero density row or an infinite term, producing NaN instead of the correct log-space limit. This also reaches log_mean_exp and Gaussian-mixture likelihoods when all component densities underflow or squared distances overflow.\n\nDelegate the reduction to torch.logsumexp, retaining the existing shape and finite-gradient behavior while handling these limits. Tests cover positive/negative infinity, zero-density Gaussian tails, multiple reduction axes, and large finite values with an independent probability-based gradient oracle.\n\nExact-head validation: all 4 native CPU regression tests pass at `51a63bd49a2bbd0e38904a44145f621cc14e195e`. Restoring the original production files at `d309eaecc18acf4152a830a895a6984b8ac71b05` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37026229422/job/110901447959).",
+    "validation": {
+      "sha": "51a63bd49a2bbd0e38904a44145f621cc14e195e",
+      "run": 37026229422,
+      "job": 110901447959,
+      "tests": 4
+    }
+  },
+  {
+    "id": "robomimic-terminal-returns",
+    "repo": "ARISE-Initiative/robomimic",
+    "base": "master",
+    "branch": "fix/oct2-robomimic-terminal-returns",
+    "sha": "636075edf92897b4284d0b2f4ed2fff8da5a7547",
+    "title": "Stop n-step Bellman returns at the first terminal transition",
+    "body": "SequenceDataset repeats final frames when a sampled n-step sequence extends beyond an episode. BCQ, CQL, and TD3-BC currently sum all rewards in that sequence even after the first done, so repeated terminal rewards are counted again and alter the Bellman target.\n\nUse a shared discounted-return calculation that includes the first terminal reward once and excludes all later rewards. For BCQ and TD3-BC infinite-horizon mode, add the absorbing-state tail to the terminal reward using the one-step discount, rather than multiplying the entire accumulated prefix by 1/(1-gamma^n). Nonterminal n-step bootstrap discounts remain unchanged.\n\nTests exercise each algorithm's native batch-processing method against an explicit stopping-time sum, cover different terminal locations and discounts, preserve ordinary one-step/nonterminal returns, verify that post-terminal rewards receive no gradient, and preserve fractional discounts for integer/uint8 rewards before the final batch float conversion.\n\nExact-head validation: all 5 native CPU regression tests pass at `636075edf92897b4284d0b2f4ed2fff8da5a7547`. Restoring the original production files at `d309eaecc18acf4152a830a895a6984b8ac71b05` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636682).",
+    "validation": {
+      "sha": "636075edf92897b4284d0b2f4ed2fff8da5a7547",
+      "run": 37027462867,
+      "job": 110905636682,
+      "tests": 5
+    }
+  },
+  {
+    "id": "dinov3-koleo-self-exclusion",
+    "repo": "facebookresearch/dinov3",
+    "base": "main",
+    "branch": "fix/oct2-dinov3-koleo-self-exclusion",
+    "sha": "ba7ec421a0890e2092bb4977a7b66a2e7b1882f7",
+    "title": "fix: exclude self neighbors at the full cosine similarity boundary",
+    "body": "KoLeo masks each self similarity with -1, which is also the valid cosine similarity of antipodal unit vectors. A two-vector antipodal batch can therefore choose itself as its nearest neighbor and report the epsilon distance instead of the inter-vector distance, producing a spurious large entropy penalty. Use negative infinity for the local and distributed self entries so every genuine neighbor remains eligible. Regression tests cover antipodal batches, distributed rank offsets, and the analytical Euclidean entropy value with finite gradients.\n\nExact-head validation: all 3 native CPU regression tests pass at `ba7ec421a0890e2092bb4977a7b66a2e7b1882f7`. Restoring the original production files at `6876159a11b4df116f30f667f8c9888617df0751` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636586).\n\nThe changed source and tests also pass the project's pinned Ruff 0.12.8 lint and format checks. [Targeted style audit](https://github.com/Afloat16/dinov3/actions/runs/37027969174).",
+    "validation": {
+      "sha": "ba7ec421a0890e2092bb4977a7b66a2e7b1882f7",
+      "run": 37027462867,
+      "job": 110905636586,
+      "tests": 3
+    }
+  },
+  {
+    "id": "dinov3-multistep-group-phase",
+    "repo": "facebookresearch/dinov3",
+    "base": "main",
+    "branch": "fix/oct2-dinov3-multistep-group-phase",
+    "sha": "7565e6e758f87a9f27b70fc982093e26802ab018",
+    "title": "fix: compute multistep depth scheduler phases once per step",
+    "body": "WarmupMultiStepLR advances its shared milestone index while computing each optimizer parameter group's rate. At a milestone, different groups can receive different decay factors; repeated rate queries can advance the schedule, and a final milestone causes an out-of-range access on a subsequent group or step. Derive the phase from the number of milestones crossed by the current step instead. Tests cover parameter-group ratios across the complete training horizon, coincident milestones, repeated queries, and optimizer/scheduler checkpoint restoration.\n\nExact-head validation: all 4 native CPU regression tests pass at `7565e6e758f87a9f27b70fc982093e26802ab018`. Restoring the original production files at `6876159a11b4df116f30f667f8c9888617df0751` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636417).\n\nThe changed source and tests also pass the project's pinned Ruff 0.12.8 lint and format checks. [Targeted style audit](https://github.com/Afloat16/dinov3/actions/runs/37027969174).",
+    "validation": {
+      "sha": "7565e6e758f87a9f27b70fc982093e26802ab018",
+      "run": 37027462867,
+      "job": 110905636417,
+      "tests": 4
+    }
+  },
+  {
+    "id": "dinov3-scheduler-total-iters",
+    "repo": "facebookresearch/dinov3",
+    "base": "main",
+    "branch": "fix/oct2-dinov3-scheduler-total-iters",
+    "sha": "7072882639b14f8d1828e9143990d719eca908d3",
+    "title": "fix: pass training duration to iterative depth schedulers",
+    "body": "The depth scheduler factory creates a filtered copy of constructor arguments, but writes total_iters to the original dictionary and then invokes the constructor with the unchanged copy. ConstantLR, LinearLR, and PolynomialLR therefore use PyTorch's default five iterations instead of the configured training duration. Update the dictionary actually passed to the constructor. Tests check all three scheduler durations, the analytical linear-decay trajectory, and that the caller's configuration is preserved.\n\nExact-head validation: all 3 native CPU regression tests pass at `7072882639b14f8d1828e9143990d719eca908d3`. Restoring the original production files at `6876159a11b4df116f30f667f8c9888617df0751` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636583).\n\nThe changed source and tests also pass the project's pinned Ruff 0.12.8 lint and format checks. [Targeted style audit](https://github.com/Afloat16/dinov3/actions/runs/37027969174).",
+    "validation": {
+      "sha": "7072882639b14f8d1828e9143990d719eca908d3",
+      "run": 37027462867,
+      "job": 110905636583,
+      "tests": 3
+    }
+  },
+  {
+    "id": "dinov3-silog-stability",
+    "repo": "facebookresearch/dinov3",
+    "base": "main",
+    "branch": "fix/oct2-dinov3-silog-stability",
+    "sha": "9017ba24d7475d5091f21131afeaff019de4a9b4",
+    "title": "fix: stabilize SILog metrics without hiding invalid predictions",
+    "body": "SILog currently subtracts two large log-error moments, then replaces every NaN result with zero. This loses a small but nonzero dispersion under a large multiplicative depth bias and also reports a perfect SILog score for invalid predictions or an empty evaluation mask. Compute the population variance directly with torch.var(correction=0), which centers the error before accumulation and preserves undefined results. Tests compare a large-bias example with a float64 centered-moment oracle, cover constant-scale and singleton inputs, and ensure invalid or fully masked inputs remain undefined.\n\nExact-head validation: all 4 native CPU regression tests pass at `9017ba24d7475d5091f21131afeaff019de4a9b4`. Restoring the original production files at `6876159a11b4df116f30f667f8c9888617df0751` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636707).\n\nThe changed source and tests also pass the project's pinned Ruff 0.12.8 lint and format checks. [Targeted style audit](https://github.com/Afloat16/dinov3/actions/runs/37027969174).",
+    "validation": {
+      "sha": "9017ba24d7475d5091f21131afeaff019de4a9b4",
+      "run": 37027462867,
+      "job": 110905636707,
+      "tests": 4
+    }
+  },
+  {
+    "id": "dust3r-homogeneous-grid-axis",
+    "repo": "naver/dust3r",
+    "base": "main",
+    "branch": "fix/oct2-dust3r-homogeneous-grid-axis",
+    "sha": "085b7722fca66f67e722a05eb5487ef231f3df6d",
+    "title": "fix: preserve homogeneous coordinates when adding grid axes",
+    "body": "xy_grid(..., homogeneous=True, unsqueeze=...) constructs three coordinate planes but then only unsqueezes the first two, dropping the homogeneous coordinate. Its NumPy path also concatenates the list returned by meshgrid with a tuple and calls Tensor.unsqueeze on arrays. Normalize the coordinate container to a tuple and add the requested axis to every plane using the corresponding backend operation. Tests compare NumPy and PyTorch grids, check each supported axis placement, and verify the complete [u,v,1] grid with a nonzero origin.\n\nExact-head validation: all 3 native CPU regression tests pass at `085b7722fca66f67e722a05eb5487ef231f3df6d`. Restoring the original production files at `4c24a6ebf04809f2cfe59915e51779c8984aaa40` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37029314505/job/110911839763).",
+    "validation": {
+      "sha": "085b7722fca66f67e722a05eb5487ef231f3df6d",
+      "run": 37029314505,
+      "job": 110911839763,
+      "tests": 3
+    }
+  },
+  {
+    "id": "dust3r-projective-transform",
+    "repo": "naver/dust3r",
+    "base": "main",
+    "branch": "fix/oct2-dust3r-projective-transform",
+    "sha": "8eb9700c4606e61aec89c9c2f5ad3549d24f8749",
+    "title": "fix: retain the homogeneous denominator in batched projective transforms",
+    "body": "geotrf's optimized BxHxWx3 tensor path discards the fourth output row of a 4x4 transform. When norm is enabled, it then divides by the transformed depth rather than by the homogeneous coordinate, disagreeing with both the NumPy and general tensor paths. Route homogeneous projections through the existing complete matrix multiplication before normalization. Tests compare explicit per-pixel homogeneous projection, affine transformations with w=1, and point/matrix gradients against a full matrix oracle.\n\nExact-head validation: all 3 native CPU regression tests pass at `8eb9700c4606e61aec89c9c2f5ad3549d24f8749`. Restoring the original production files at `4c24a6ebf04809f2cfe59915e51779c8984aaa40` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636548).",
+    "validation": {
+      "sha": "8eb9700c4606e61aec89c9c2f5ad3549d24f8749",
+      "run": 37027462867,
+      "job": 110905636548,
+      "tests": 3
+    }
+  },
+  {
+    "id": "dust3r-single-map-factor",
+    "repo": "naver/dust3r",
+    "base": "main",
+    "branch": "fix/oct2-dust3r-single-map-factor",
+    "sha": "dc8dc31c9e5dff5cb4bb9c7b2a7e1881fc07443c",
+    "title": "fix: return the scale factor for single-map point-cloud normalization",
+    "body": "normalize_pointcloud supports pts2=None, but enabling ret_factor then tries to add a tuple to the normalized tensor and raises TypeError. Return (normalized_points, factor) for a single map, retaining the existing three-element paired-map result. Tests check scale reconstruction for average, median, and square-root-distance normalization, paired-map compatibility, and differentiability of the returned scale.\n\nExact-head validation: all 3 native CPU regression tests pass at `dc8dc31c9e5dff5cb4bb9c7b2a7e1881fc07443c`. Restoring the original production files at `4c24a6ebf04809f2cfe59915e51779c8984aaa40` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636743).",
+    "validation": {
+      "sha": "dc8dc31c9e5dff5cb4bb9c7b2a7e1881fc07443c",
+      "run": 37027462867,
+      "job": 110905636743,
+      "tests": 3
+    }
+  },
+  {
+    "id": "dust3r-unmasked-point-count",
+    "repo": "naver/dust3r",
+    "base": "main",
+    "branch": "fix/oct2-dust3r-unmasked-point-count",
+    "sha": "eaea767cc9f7549354fed3545fd1530f84e37f94",
+    "title": "fix: count points instead of coordinates in unmasked cloud normalization",
+    "body": "Average point-cloud normalization obtains its denominator from invalid_to_zeros. With a spatial validity mask this is the number of points, but without a mask the helper counts scalar coordinates, yielding three times as many elements for XYZ maps. The optional-mask path therefore changes the normalization scale by a factor of three, and a pair with only one masked view combines incompatible units. Count flattened points locally for unmasked views. Tests cover mask equivalence for all average-distance modes, differently sized map pairs, mixed masked/unmasked views, and gradients against a mean-distance oracle.\n\nExact-head validation: all 4 native CPU regression tests pass at `eaea767cc9f7549354fed3545fd1530f84e37f94`. Restoring the original production files at `4c24a6ebf04809f2cfe59915e51779c8984aaa40` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636640).",
+    "validation": {
+      "sha": "eaea767cc9f7549354fed3545fd1530f84e37f94",
+      "run": 37027462867,
+      "job": 110905636640,
+      "tests": 4
+    }
+  },
+  {
+    "id": "gsplat-broadcast-masked-mean",
+    "repo": "nerfstudio-project/gsplat",
+    "base": "main",
+    "branch": "fix/oct2-gsplat-broadcast-masked-mean",
+    "sha": "a1cefe463bfa461aa599712272c9ba40ebf10288",
+    "title": "fix: normalize masked reductions by the broadcast mask coverage",
+    "body": "reduce_mean documents broadcastable masks, but its numerator broadcasts a shared mask across channels/batches while its denominator sums only the original mask. A mask with a singleton channel axis therefore multiplies the reported mean by the channel count. Broadcast the mask before both reductions and replace excluded values before multiplication so masked NaN/Inf entries do not contaminate the result. Tests cover shared-channel masks, integer weights, excluded nonfinite values, connected zero for an empty mask, and gradients.\n\nExact-head validation: all 4 native CPU regression tests pass at `a1cefe463bfa461aa599712272c9ba40ebf10288`. Restoring the original production files at `512d366b67073d77ca099ede742683c165dfc23b` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636699).",
+    "validation": {
+      "sha": "a1cefe463bfa461aa599712272c9ba40ebf10288",
+      "run": 37027462867,
+      "job": 110905636699,
+      "tests": 4
+    }
+  },
+  {
+    "id": "vggt-masked-normal-points",
+    "repo": "facebookresearch/vggt",
+    "base": "main",
+    "branch": "fix/oct2-vggt-masked-normal-points",
+    "sha": "a309090609eeb054c950cdfa3c19b3ac1df3f592",
+    "title": "fix: exclude masked coordinates before surface-normal differentiation",
+    "body": "The surface-normal path computes cross products and normalizes every point, then masks invalid stencils afterward. A NaN or infinite point excluded by the validity mask can still introduce NaN gradients through the unused cross-product/normalization branches. Replace masked coordinates before those operations while retaining the existing stencil validity masks. Tests verify valid normals are invariant to excluded nonfinite coordinates, compare normal-loss values and gradients with finite replacements, and check finite zero gradients at masked points.\n\nExact-head validation: all 3 native CPU regression tests pass at `a309090609eeb054c950cdfa3c19b3ac1df3f592`. Restoring the original production files at `a288dd0f14786c93483e45524328726ab7b1b4ce` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636729).",
+    "validation": {
+      "sha": "a309090609eeb054c950cdfa3c19b3ac1df3f592",
+      "run": 37027462867,
+      "job": 110905636729,
+      "tests": 3
+    }
+  },
+  {
+    "id": "vggt-optional-regression-arguments",
+    "repo": "facebookresearch/vggt",
+    "base": "main",
+    "branch": "fix/oct2-vggt-optional-regression-arguments",
+    "sha": "e4de8627204836d8c8bfd8cc0f786b28173ac77b",
+    "title": "fix: honor optional confidence in the regression objective",
+    "body": "regression_loss documents optional confidence, but unconditionally indexes conf even when an explicit gradient-loss selector disables spatial loss. Treat missing confidence as unit confidence and only reshape a confidence map when it exists. This preserves gamma*distance for the confidence objective and keeps confidence-named gradient paths usable without a confidence map. Tests compare missing and explicit unit confidence, check the analytical unweighted objective and prediction gradients, and exercise the gradient path without confidence. The separate gradient_loss_fn=None handling already proposed in #478 is left to that PR.\n\nExact-head validation: all 4 native CPU regression tests pass at `e4de8627204836d8c8bfd8cc0f786b28173ac77b`. Restoring the original production files at `a288dd0f14786c93483e45524328726ab7b1b4ce` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905636785).",
+    "validation": {
+      "sha": "e4de8627204836d8c8bfd8cc0f786b28173ac77b",
+      "run": 37027462867,
+      "job": 110905636785,
+      "tests": 4
+    }
+  },
+  {
+    "id": "nanogpt-scaler-resume",
+    "repo": "karpathy/nanoGPT",
+    "base": "master",
+    "branch": "fix/oct2-nanogpt-scaler-resume",
+    "sha": "a871044de04b43e13701160c427824096a7c76e3",
+    "title": "fix(train): save and restore gradient scaler state in checkpoints",
+    "body": "FP16 checkpoint resume currently restores model and AdamW state but recreates GradScaler with its initial scale and growth tracker. After scale adaptation this changes overflow detection and optimizer-step behavior relative to the saved training state. Save scaler.state_dict alongside optimizer state and restore it when present; legacy and disabled-scaler checkpoints remain supported.\n\nRegression tests execute the complete native train.py with tiny local token files and a real CPU GradScaler selected at the device boundary. They check saved scale/tracker state, restoration from a deliberately adapted scale/tracker, and compatibility with legacy/disabled checkpoints. CPU float32 model arithmetic exercises the real scale/backward/unscale/step/update sequence; CUDA FP16 training itself is not measured.\n\nExact-head validation: all 3 native CPU regression tests pass at `a871044de04b43e13701160c427824096a7c76e3`. Restoring the original production files at `3adf61e154c3fe3fca428ad6bc3818b27a3b8291` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37029314505/job/110911839898).",
+    "validation": {
+      "sha": "a871044de04b43e13701160c427824096a7c76e3",
+      "run": 37029314505,
+      "job": 110911839898,
+      "tests": 3
+    }
+  },
+  {
+    "id": "nanogpt-strided-targets",
+    "repo": "karpathy/nanoGPT",
+    "base": "master",
+    "branch": "fix/oct2-nanogpt-strided-targets",
+    "sha": "fa6969bc10760aa4cb52df34495a674cb86b724f",
+    "title": "fix(model): accept strided next-token targets in cross entropy",
+    "body": "A standard teacher-forcing split, inputs=tokens[:, :-1] and targets=tokens[:, 1:], produces non-contiguous target tensors for batched sequences. GPT.forward currently flattens targets with view and raises RuntimeError for this input. Use reshape when flattening logits and targets so contiguous inputs retain their fast path and strided targets work correctly.\n\nRegression tests run the complete native GPT, compare losses with an independent logsumexp/selected-token oracle (including ignore_index masks), and compare all parameter gradients with the contiguous-target reference.\n\nExact-head validation: all 3 native CPU regression tests pass at `fa6969bc10760aa4cb52df34495a674cb86b724f`. Restoring the original production files at `3adf61e154c3fe3fca428ad6bc3818b27a3b8291` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37029314505/job/110911839829).",
+    "validation": {
+      "sha": "fa6969bc10760aa4cb52df34495a674cb86b724f",
+      "run": 37029314505,
+      "job": 110911839829,
+      "tests": 3
+    }
+  },
+  {
+    "id": "ddp-dpmpp-self-conditioning",
+    "repo": "lucidrains/denoising-diffusion-pytorch",
+    "base": "main",
+    "branch": "fix/oct2-ddp-dpmpp-self-conditioning",
+    "sha": "9802d4277a7383ba31dc1e39eca3e2a036e313a8",
+    "title": "fix: carry self conditioning through EDM DPM++ sampling",
+    "body": "The EDM Heun sampler carries the prior denoised estimate to self-conditioned networks, but sample_using_dpmpp always passes None. Feed the prior denoised prediction into the next DPM++ network evaluation when self_condition is enabled. Regression tests observe the complete native preconditioned output and verify each subsequent condition is that previous denoised estimate; ordinary non-self-conditioned sampling remains covered.\n\nExact-head validation: all 2 native CPU regression tests pass at `9802d4277a7383ba31dc1e39eca3e2a036e313a8`. Restoring the original production files at `c8155b1dc622e3f1ef0d53dc6e5a570ca105bcec` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905639723).",
+    "validation": {
+      "sha": "9802d4277a7383ba31dc1e39eca3e2a036e313a8",
+      "run": 37027462867,
+      "job": 110905639723,
+      "tests": 2
+    }
+  },
+  {
+    "id": "vq-latent-frozen-movement",
+    "repo": "lucidrains/vector-quantize-pytorch",
+    "base": "master",
+    "branch": "fix/oct2-vq-latent-frozen-movement",
+    "sha": "bdc33a588d60dc0e681a76083b6aa52d0748a7e4",
+    "title": "fix: register frozen latent scalar codebooks as module state",
+    "body": "With optimize_values=False, scalar codebooks are plain tensors in a Python list. Module device/dtype transfers leave them behind and state_dict omits them, unlike the trainable path. Store them as non-trainable parameters in ParameterList so standard module movement and checkpoints include every scalar table while gradients remain disabled. Tests cover float64 movement, native forward/backward, meta-device movement, and a frozen-table state round trip. Versioned loading restores initialized scalar tables for legacy frozen checkpoints, which did not store them; modern missing-table errors remain strict.\n\nExact-head validation: all 5 native CPU regression tests pass at `bdc33a588d60dc0e681a76083b6aa52d0748a7e4`. Restoring the original production files at `4103bf2c7be993b6e0ac21d88684818c9880c478` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37029314505/job/110911839438).",
+    "validation": {
+      "sha": "bdc33a588d60dc0e681a76083b6aa52d0748a7e4",
+      "run": 37029314505,
+      "job": 110911839438,
+      "tests": 5
+    }
+  },
+  {
+    "id": "vq-latent-learned-codec",
+    "repo": "lucidrains/vector-quantize-pytorch",
+    "base": "master",
+    "branch": "fix/oct2-vq-latent-learned-codec",
+    "sha": "ebf443651d7015868acfd9fc38c5889c89877347",
+    "title": "fix: encode and decode current latent scalar codebooks",
+    "body": "LatentQuantize quantizes against trainable scalar values, but codes_to_indices and indices_to_codes assume the initial uniformly spaced lattice. Updated or loaded nonuniform codebooks can therefore produce incorrect token IDs and fail reconstruction from saved indices. Encode each dimension by its nearest current scalar value and decode mixed-radix digits with those same current tables. Tests cover all index combinations, unsorted scalar tables, and native projected/multiple-codebook round trips.\n\nExact-head validation: all 3 native CPU regression tests pass at `ebf443651d7015868acfd9fc38c5889c89877347`. Restoring the original production files at `4103bf2c7be993b6e0ac21d88684818c9880c478` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905639795).",
+    "validation": {
+      "sha": "ebf443651d7015868acfd9fc38c5889c89877347",
+      "run": 37027462867,
+      "job": 110905639795,
+      "tests": 3
+    }
+  },
+  {
+    "id": "vq-lfq-distributed-mean",
+    "repo": "lucidrains/vector-quantize-pytorch",
+    "base": "master",
+    "branch": "fix/oct2-vq-lfq-distributed-mean",
+    "sha": "a060d4124562f40a8e6340a780f5152e514eef6b",
+    "title": "fix: use the differentiable collective result for LFQ batch entropy",
+    "body": "torch.distributed.nn.all_reduce returns a new autograd-aware tensor. Ignoring that return value leaves each rank's local probability vector divided by world size, rather than the global mean used by LFQ batch entropy. Retain the collective result and evaluate process-group availability at call time. Two real CPU Gloo workers verify the global mean and collective backward, including initialization after an earlier helper call.\n\nExact-head validation: all 2 native CPU regression tests pass at `a060d4124562f40a8e6340a780f5152e514eef6b`. Restoring the original production files at `4103bf2c7be993b6e0ac21d88684818c9880c478` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37029314505/job/110911839645).",
+    "validation": {
+      "sha": "a060d4124562f40a8e6340a780f5152e514eef6b",
+      "run": 37029314505,
+      "job": 110911839645,
+      "tests": 2
+    }
+  },
+  {
+    "id": "vq-lfq-small-entropy-sample",
+    "repo": "lucidrains/vector-quantize-pytorch",
+    "base": "master",
+    "branch": "fix/oct2-vq-lfq-small-entropy-sample",
+    "sha": "1847dcb11915b60879f0c3fe259b68869ad32541",
+    "title": "fix: retain an entropy sample for small nonempty LFQ batches",
+    "body": "A positive frac_per_sample_entropy can round down to zero selected tokens for small batches. Subsequent mean reductions return NaN and contaminate the quantizer's auxiliary training loss. Retain at least one token when subsampling a nonempty batch. Tests cover the single-token analytical result and finite gradients for a two-token batch whose requested sample fraction previously selected nothing.\n\nExact-head validation: all 2 native CPU regression tests pass at `1847dcb11915b60879f0c3fe259b68869ad32541`. Restoring the original production files at `4103bf2c7be993b6e0ac21d88684818c9880c478` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905639670).",
+    "validation": {
+      "sha": "1847dcb11915b60879f0c3fe259b68869ad32541",
+      "run": 37027462867,
+      "job": 110905639670,
+      "tests": 2
+    }
+  },
+  {
+    "id": "xt-continuous-feature-mean",
+    "repo": "lucidrains/x-transformers",
+    "base": "main",
+    "branch": "fix/oct2-xt-continuous-feature-mean",
+    "sha": "705fb718bd40cc3469d725d81b44f22b62f8304b",
+    "title": "fix: average continuous batch losses over feature dimensions",
+    "body": "The equal_loss_weight_batch path sums loss over tokens and features but divides only by valid tokens. Switching from token weighting to equal sequence weighting therefore multiplies MSE/L1/Gaussian NLL by the output dimension even for equal-length sequences. Include the feature count in the denominator. Tests cover feature-replication invariance, analytical gradients, an empty example, and the native continuous wrapper.\n\nExact-head validation: all 3 native CPU regression tests pass at `705fb718bd40cc3469d725d81b44f22b62f8304b`. Restoring the original production files at `afee5e0e6540f243c151378bef8f36b642cb664c` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905639825).",
+    "validation": {
+      "sha": "705fb718bd40cc3469d725d81b44f22b62f8304b",
+      "run": 37027462867,
+      "job": 110905639825,
+      "tests": 3
+    }
+  },
+  {
+    "id": "xt-looped-loss-expectation",
+    "repo": "lucidrains/x-transformers",
+    "base": "main",
+    "branch": "fix/oct2-xt-looped-loss-expectation",
+    "sha": "eedb9db73117920f4efbfe5f4114934270c33ba4",
+    "title": "fix: sum exit-weighted loop losses before token averaging",
+    "body": "Loop exit probabilities already form a stick-breaking distribution whose mass sums to one. Averaging the probability-weighted cross entropy over both tokens and loops introduces an additional 1/loop_count factor, changing the language objective's scale with recurrent depth. Sum over loops before averaging valid target tokens. Tests evaluate an independent stick-breaking expectation and its parameter gradients on native looped models with 2, 3, and 4 recurrent steps.\n\nExact-head validation: all 2 native CPU regression tests pass at `eedb9db73117920f4efbfe5f4114934270c33ba4`. Restoring the original production files at `afee5e0e6540f243c151378bef8f36b642cb664c` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905639809).",
+    "validation": {
+      "sha": "eedb9db73117920f4efbfe5f4114934270c33ba4",
+      "run": 37027462867,
+      "job": 110905639809,
+      "tests": 2
+    }
+  },
+  {
+    "id": "xt-mdlm-positive-weights",
+    "repo": "lucidrains/x-transformers",
+    "base": "main",
+    "branch": "fix/oct2-xt-mdlm-positive-weights",
+    "sha": "9afe84a90795980335215845663950f02b20bb1a",
+    "title": "fix: use positive negative-log-likelihood weights for MDLM training",
+    "body": "The default linear and cosine schedules decrease with time, so the existing derivative-based coefficient is negative. That coefficient multiplies PyTorch cross entropy, reversing the generator objective. Negate the coefficient to make the negative-log-likelihood weights positive while preserving their existing magnitudes and the mask schedule. Tests check both schedules against analytical derivatives and exercise a native masked-generator forward/backward pass. This fixes the objective sign; it does not change the existing schedule or masking convention.\n\nExact-head validation: all 2 native CPU regression tests pass at `9afe84a90795980335215845663950f02b20bb1a`. Restoring the original production files at `afee5e0e6540f243c151378bef8f36b642cb664c` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905639827).",
+    "validation": {
+      "sha": "9afe84a90795980335215845663950f02b20bb1a",
+      "run": 37027462867,
+      "job": 110905639827,
+      "tests": 2
+    }
+  },
+  {
+    "id": "xt-probabilistic-rollout-axis",
+    "repo": "lucidrains/x-transformers",
+    "base": "main",
+    "branch": "fix/oct2-xt-probabilistic-rollout-axis",
+    "sha": "5b29a60ea8fb1e13845689d1425e65dcbe2f8def",
+    "title": "fix: concatenate Gaussian rollout predictions along time",
+    "body": "Probabilistic continuous outputs are stacked as [mean_or_variance, batch, time, features]. Concatenating successive rollout predictions along dimension 1 combines examples instead of timesteps, causing invalid Gaussian NLL shapes or unintended broadcasting. Concatenate along the relative time axis so both deterministic and probabilistic outputs retain their layout. Tests use native Gaussian models at multiple batch sizes and rollout horizons, verify exact loss input shapes, and check backward.\n\nExact-head validation: all 2 native CPU regression tests pass at `5b29a60ea8fb1e13845689d1425e65dcbe2f8def`. Restoring the original production files at `afee5e0e6540f243c151378bef8f36b642cb664c` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905640060).",
+    "validation": {
+      "sha": "5b29a60ea8fb1e13845689d1425e65dcbe2f8def",
+      "run": 37027462867,
+      "job": 110905640060,
+      "tests": 2
+    }
+  },
+  {
+    "id": "xt-xl-valid-chunk-weights",
+    "repo": "lucidrains/x-transformers",
+    "base": "main",
+    "branch": "fix/oct2-xt-xl-valid-chunk-weights",
+    "sha": "24c5065eec1b738ce400f3a37c4af2e9491e2ed7",
+    "title": "fix: weight XL chunk losses by valid target counts",
+    "body": "XLAutoregressiveWrapper computes a mean over each chunk's non-ignored labels, then weights it by the physical chunk length. With padding, empty chunks dilute the loss and chunks with different valid-label densities receive incorrect weights. Normalize each example's chunk sum by its total valid target count. Tests compare values and parameter gradients with an explicit sum of native per-token cross entropy, including entirely ignored chunks and examples.\n\nExact-head validation: all 2 native CPU regression tests pass at `24c5065eec1b738ce400f3a37c4af2e9491e2ed7`. Restoring the original production files at `afee5e0e6540f243c151378bef8f36b642cb664c` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905643806).",
+    "validation": {
+      "sha": "24c5065eec1b738ce400f3a37c4af2e9491e2ed7",
+      "run": 37027462867,
+      "job": 110905643806,
+      "tests": 2
+    }
+  },
+  {
+    "id": "gaussian-colmap-utf8",
+    "repo": "graphdeco-inria/gaussian-splatting",
+    "base": "main",
+    "branch": "fix/oct2-gaussian-colmap-utf8",
+    "sha": "f933cd32d821831af358e823a6e2d3c6fbd3a439",
+    "title": "Decode complete UTF-8 image names in binary COLMAP models",
+    "body": "The binary training loader decodes image names one byte at a time. A multi-byte UTF-8 filename therefore raises `UnicodeDecodeError` before camera loading, as reported in #407. The utility model reader shares this defect, and its writer packs each Unicode character with a one-byte format.\n\nCollect the null-terminated name bytes before decoding and write the complete encoded UTF-8 payload. Apply the same contract to the training loader and utility model I/O.\n\nRegression tests use an independently encoded binary fixture, verify exact writer bytes, cover both readers, and preserve ASCII multi-record compatibility. Run `python -m unittest discover -s tests -p test_gaussian_colmap_utf8.py -v`.\n\nFixes #407.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 3 native CPU regression tests pass at `f933cd32d821831af358e823a6e2d3c6fbd3a439`. Restoring the original production files at `54c035f7834b564019656c3e3fcc3646292f727d` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905643955).",
+    "validation": {
+      "sha": "f933cd32d821831af358e823a6e2d3c6fbd3a439",
+      "run": 37027462867,
+      "job": 110905643955,
+      "tests": 3
+    }
+  },
+  {
+    "id": "gaussian-depth-calibration",
+    "repo": "graphdeco-inria/gaussian-splatting",
+    "base": "main",
+    "branch": "fix/oct2-gaussian-depth-calibration",
+    "sha": "b96f545c451b62948843b270bb89db6df0988118",
+    "title": "Reject degenerate depth calibration and use valid correspondences",
+    "body": "Depth-scale calibration can divide by zero for a constant monocular depth map, and invalid COLMAP depths can enter the range test. It also maps both coordinate axes using the height ratio, which samples the wrong pixels when width and height ratios differ.\n\nUse the image metadata passed to the function, project finite positive depths, map x/y with their respective ratios, and fit only valid correspondences. Leave calibration disabled with finite zero parameters when the monocular dispersion is zero.\n\nRegression tests recover a known affine depth relation from independently sized axes, verify the constant-map fallback, and exclude zero/negative/NaN/infinite COLMAP depths. Run `python -m unittest discover -s tests -p test_gaussian_depth_calibration.py -v`.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 3 native CPU regression tests pass at `b96f545c451b62948843b270bb89db6df0988118`. Restoring the original production files at `54c035f7834b564019656c3e3fcc3646292f727d` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905643867).",
+    "validation": {
+      "sha": "b96f545c451b62948843b270bb89db6df0988118",
+      "run": 37027462867,
+      "job": 110905643867,
+      "tests": 3
+    }
+  },
+  {
+    "id": "hloc-binary-utf8",
+    "repo": "cvg/Hierarchical-Localization",
+    "base": "master",
+    "branch": "fix/oct2-hloc-binary-utf8",
+    "sha": "6df3ff6ac83ee475064f2b8a30e4300be4b63b7c",
+    "title": "Handle UTF-8 image names in binary COLMAP models",
+    "body": "Binary image-name serialization currently treats a UTF-8 byte as a complete character, and the writer packs each Unicode character with the one-byte `c` format. Names such as `场景/été.jpg` fail to read or write.\n\nCollect the complete null-terminated byte string before decoding, and write the complete UTF-8 payload followed by its terminator. The binary record layout and ASCII behavior stay compatible.\n\nRegression tests use an independently encoded binary fixture, verify the exact bytes written, and cover ASCII multi-record roundtrips. Run `python -m unittest discover -s tests -p test_hloc_binary_utf8.py -v`.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 3 native CPU regression tests pass at `6df3ff6ac83ee475064f2b8a30e4300be4b63b7c`. Restoring the original production files at `c13273bd0ecc2917a35910fd843712a1c6243193` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905643763).",
+    "validation": {
+      "sha": "6df3ff6ac83ee475064f2b8a30e4300be4b63b7c",
+      "run": 37027462867,
+      "job": 110905643763,
+      "tests": 3
+    }
+  },
+  {
+    "id": "hloc-retrieval-small-db",
+    "repo": "cvg/Hierarchical-Localization",
+    "base": "master",
+    "branch": "fix/oct2-hloc-retrieval-small-db",
+    "sha": "1efa4d95f9d237c5bf67a568227093df142215a5",
+    "title": "Bound retrieval top-k by the database size",
+    "body": "Requesting more matches than there are database images raises `selected index k out of range` in the shared score-selection routine. This can occur when a retrieval or pose-pairing configuration is reused with a small database.\n\nBound top-k by the number of score columns. Keep the existing masking, score thresholds, ranking, and finite-value filtering so the result contains only available eligible pairs.\n\nRegression tests compare results with an independent sorting oracle, cover an oversized request, zero selection, and a zero-column score matrix. Run `python -m unittest discover -s tests -p test_hloc_retrieval_small_db.py -v`.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 3 native CPU regression tests pass at `1efa4d95f9d237c5bf67a568227093df142215a5`. Restoring the original production files at `c13273bd0ecc2917a35910fd843712a1c6243193` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905643847).",
+    "validation": {
+      "sha": "1efa4d95f9d237c5bf67a568227093df142215a5",
+      "run": 37027462867,
+      "job": 110905643847,
+      "tests": 3
+    }
+  },
+  {
+    "id": "sam3d-log-normalization",
+    "repo": "facebookresearch/sam-3d-objects",
+    "base": "main",
+    "branch": "fix/oct2-sam3d-log-normalization",
+    "sha": "66363b62354ec1f476917f53a809b2555dfe8cd6",
+    "title": "Make log scale-shift normalization invertible",
+    "body": "`denormalize(y)` computes `exp(y * scale_log + shift_log)`, but `normalize(x)` currently computes `log(x) - shift_log / scale_log`. These are inverses only in special cases such as unit scale.\n\nApply the affine shift before division in log space: `(log(x) - shift_log) / scale_log`.\n\nRegression tests compare against the log-affine definition, verify scalar and per-channel roundtrips, and check that the inverse chain has identity gradient. Run `LIDRA_SKIP_INIT=1 python -m unittest discover -s tests -p test_sam3d_log_normalization.py -v`.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 3 native CPU regression tests pass at `66363b62354ec1f476917f53a809b2555dfe8cd6`. Restoring the original production files at `f91db411c50efee93d8db7aeb323885650f6f722` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905643894).",
+    "validation": {
+      "sha": "66363b62354ec1f476917f53a809b2555dfe8cd6",
+      "run": 37027462867,
+      "job": 110905643894,
+      "tests": 3
+    }
+  },
+  {
+    "id": "sam3d-pose-batch",
+    "repo": "facebookresearch/sam-3d-objects",
+    "base": "main",
+    "branch": "fix/oct2-sam3d-pose-batch",
+    "sha": "a090f2b2b30ac49da510cab0a9766a702b83a036",
+    "title": "Broadcast scene transforms in object batch order",
+    "body": "Object poses are flattened from `(B, K, C)` in scene-major order, but the post-composed scene matrices use `repeat(K, 1, 1)`, which tiles scenes in a different order. For multiple scenes and multiple objects, some objects receive another scene's normalization transform.\n\nRepeat each scene matrix consecutively for its K objects before composition. Preserve the existing output shapes and decomposition.\n\nCPU regression tests compare scales and translations with analytic scene-wise affine transforms, cover isotropic object scales, and verify the single-scene/single-object cases. Run `LIDRA_SKIP_INIT=1 python -m unittest discover -s tests -p test_sam3d_pose_batch.py -v` with the repository's PyTorch3D dependency.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 3 native CPU regression tests pass at `a090f2b2b30ac49da510cab0a9766a702b83a036`. Restoring the original production files at `f91db411c50efee93d8db7aeb323885650f6f722` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905644082).",
+    "validation": {
+      "sha": "a090f2b2b30ac49da510cab0a9766a702b83a036",
+      "run": 37027462867,
+      "job": 110905644082,
+      "tests": 3
+    }
+  },
+  {
+    "id": "trellis2-balanced-tail",
+    "repo": "microsoft/TRELLIS.2",
+    "base": "main",
+    "branch": "fix/oct2-trellis2-balanced-tail",
+    "sha": "167651ac9c01c43b3ded45f0e689a074a2434df0",
+    "title": "Preserve the final batch in balanced resumable sampling",
+    "body": "`BalancedResumableSampler` only visits complete global batches. After the parent sampler has already padded or truncated for distributed divisibility, a final partial batch is silently discarded; small datasets can yield no indices even though `len(sampler)` is positive.\n\nVisit the final distributed batch as well. Its size remains divisible by world size, so the existing equal-size load balancing preserves equal per-rank sample counts. `drop_last` continues to control the distributed remainder through the parent sampler.\n\nRegression tests check sample conservation and reported cardinality across ranks, small datasets, distributed `drop_last`, and resume offsets through the tail. Run `python -m unittest discover -s tests -p test_trellis2_balanced_tail.py -v`.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 3 native CPU regression tests pass at `167651ac9c01c43b3ded45f0e689a074a2434df0`. Restoring the original production files at `75fbf0183001ed9876c8dbb35de6b68552ee08bd` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905643893).",
+    "validation": {
+      "sha": "167651ac9c01c43b3ded45f0e689a074a2434df0",
+      "run": 37027462867,
+      "job": 110905643893,
+      "tests": 3
+    }
+  },
+  {
+    "id": "trellis2-mesh-ply-layout",
+    "repo": "microsoft/TRELLIS.2",
+    "base": "main",
+    "branch": "fix/oct2-trellis2-mesh-ply-layout",
+    "sha": "3f3ef901b0c34b26a9c414b3bda65c756544d540",
+    "title": "Read binary mesh properties using the PLY header",
+    "body": "The binary mesh reader assumes each vertex contains only three little-endian float32 values. `write_ply(..., vertex_colors=...)` appends RGB/RGBA bytes, so reading that file misaligns subsequent vertices and face records. Header-declared float64 coordinates, reordered properties and big-endian data are also decoded incorrectly.\n\nUse the existing `plyfile` dependency to interpret the header and select coordinates and face indices by property name. Preserve float32 vertices and int32 triangle/quad arrays, including empty face arrays. Preserve the previous binary n-gon rejection and ASCII n-gon skipping behavior.\n\nRegression tests roundtrip the repository's colored writer and read independently constructed files with extra properties, float64 coordinates and both byte orders, and verify the existing binary/ASCII n-gon policy. Run `python -m unittest discover -s tests -p test_trellis2_mesh_ply_layout.py -v`.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 4 native CPU regression tests pass at `3f3ef901b0c34b26a9c414b3bda65c756544d540`. Restoring the original production files at `75fbf0183001ed9876c8dbb35de6b68552ee08bd` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905643993).",
+    "validation": {
+      "sha": "3f3ef901b0c34b26a9c414b3bda65c756544d540",
+      "run": 37027462867,
+      "job": 110905643993,
+      "tests": 4
+    }
+  },
+  {
+    "id": "trellis2-smooth-l1-zero",
+    "repo": "microsoft/TRELLIS.2",
+    "base": "main",
+    "branch": "fix/oct2-trellis2-smooth-l1-zero",
+    "sha": "bda7c9bdc428167a5398a919abaf5441ae8079e4",
+    "title": "Preserve finite gradients when Smooth L1 beta is zero",
+    "body": "With `beta=0`, the current `torch.where` computes the quadratic branch with a zero denominator even though the forward result selects L1. Backward can then produce NaN gradients, including for exact predictions.\n\nUse PyTorch's native Smooth L1 implementation, which defines the zero-beta L1 limit while preserving the existing positive-beta mean reduction.\n\nRegression tests check zero-beta values and gradients (including all exact matches), and compare positive-beta values/gradients with an explicit piecewise oracle. Run `python -m unittest discover -s tests -p test_trellis2_smooth_l1_zero.py -v`.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 3 native CPU regression tests pass at `bda7c9bdc428167a5398a919abaf5441ae8079e4`. Restoring the original production files at `75fbf0183001ed9876c8dbb35de6b68552ee08bd` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905644131).",
+    "validation": {
+      "sha": "bda7c9bdc428167a5398a919abaf5441ae8079e4",
+      "run": 37027462867,
+      "job": 110905644131,
+      "tests": 3
+    }
+  },
+  {
+    "id": "trellis2-voxel-ply-attributes",
+    "repo": "microsoft/TRELLIS.2",
+    "base": "main",
+    "branch": "fix/oct2-trellis2-voxel-ply-attributes",
+    "sha": "a7cc7552904d2e74a9333b6daa8ce9edb5b534a3",
+    "title": "Read voxel PLY attribute channels without prefix collisions",
+    "body": "Voxel PLY channel grouping uses `startswith(name + '_')`. When valid attribute names share a prefix, such as `color` and `color_extra`, channels from both attributes are counted together and the reader attempts to access nonexistent properties.\n\nSplit each property at its final numeric suffix and group by the exact attribute name. Reconstruct channels in numeric order and report non-contiguous layouts explicitly.\n\nRegression tests roundtrip shared-prefix and underscore-containing names, preserve two-digit channel order, and reject a missing channel layout. Run `python -m unittest discover -s tests -p test_trellis2_voxel_ply_attributes.py -v`.\n\nValidation: native CPU regression tests pass on this branch; the same tests fail against the pinned original source. [Validation run](https://github.com/Afloat16/vggt/actions/runs/37027462867).\n\nExact-head validation: all 3 native CPU regression tests pass at `a7cc7552904d2e74a9333b6daa8ce9edb5b534a3`. Restoring the original production files at `75fbf0183001ed9876c8dbb35de6b68552ee08bd` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905647764).",
+    "validation": {
+      "sha": "a7cc7552904d2e74a9333b6daa8ce9edb5b534a3",
+      "run": 37027462867,
+      "job": 110905647764,
+      "tests": 3
+    }
+  },
+  {
+    "id": "dreamer-gym-termination",
+    "repo": "danijar/dreamerv3",
+    "base": "main",
+    "branch": "fix/oct2-dreamer-gym-termination",
+    "sha": "106556a414f368d1806d62bf92c4ca47ac7b4afa",
+    "title": "fix: preserve Gym termination and truncation semantics in FromGym",
+    "body": "FromGym currently treats legacy Gym time-limit truncations as terminal transitions. That prevents value bootstrapping at a time limit. It also assumes the four-value step and observation-only reset protocols, and forwards the wrapper's reset key to Dict action environments.\n\nSupport both legacy and modern reset/step results, set is_last from termination or truncation, and set is_terminal from true termination while preserving the existing info override. Remove the wrapper reset key before reconstructing Dict actions. Tests cover both protocols and their terminal flags, legacy TimeLimit.truncated, and Dict action forwarding.\n\nThe earlier broad Gym compatibility proposal #161 was closed without merging. This change preserves legacy support and includes the time-limit, info-override, and Dict-action fixes with focused regression coverage.\n\nValidation: 3 native regression tests passed at 106556a414f368d1806d62bf92c4ca47ac7b4afa. Restoring the exact upstream production files caused functional regression failures; the original-source comparison guard passed.\n\n```bash\npython -m unittest discover -s embodied/tests -p test_from_gym_termination.py -v\n```\n\nExact-head validation: all 3 native CPU regression tests pass at `106556a414f368d1806d62bf92c4ca47ac7b4afa`. Restoring the original production files at `e3f02248693a79dc8b0ebd62c93683888ddaccfe` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905647753).",
+    "validation": {
+      "sha": "106556a414f368d1806d62bf92c4ca47ac7b4afa",
+      "run": 37027462867,
+      "job": 110905647753,
+      "tests": 3
+    }
+  },
+  {
+    "id": "dreamer-single-item-eviction",
+    "repo": "danijar/dreamerv3",
+    "base": "main",
+    "branch": "fix/oct2-dreamer-single-item-eviction",
+    "sha": "00abec7f957e67c49436e5be9f56afdbb95d0fe2",
+    "title": "fix: allow Uniform replay selectors to evict their final entry",
+    "body": "Uniform replay selection can contain a single item, but deletion currently asserts that at least two items exist. This prevents Replay from evicting its only stored sequence when capacity is one.\n\nAllow removal of the final entry through the existing swap-and-pop path. Regression coverage checks empty/repopulated selector state and repeatedly adds, evicts, and samples actual Replay sequences at capacity one.\n\nValidation: 2 native regression tests passed at 00abec7f957e67c49436e5be9f56afdbb95d0fe2. Restoring the exact upstream production files caused functional regression failures; the original-source comparison guard passed.\n\n```bash\npython -m unittest discover -s embodied/tests -p test_uniform_single_item.py -v\n```\n\nExact-head validation: all 2 native CPU regression tests pass at `00abec7f957e67c49436e5be9f56afdbb95d0fe2`. Restoring the original production files at `e3f02248693a79dc8b0ebd62c93683888ddaccfe` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905647759).",
+    "validation": {
+      "sha": "00abec7f957e67c49436e5be9f56afdbb95d0fe2",
+      "run": 37027462867,
+      "job": 110905647759,
+      "tests": 2
+    }
+  },
+  {
+    "id": "dreamer-unbounded-actions",
+    "repo": "danijar/dreamerv3",
+    "base": "main",
+    "branch": "fix/oct2-dreamer-unbounded-actions",
+    "sha": "d3362d6c0e559ec1148c76d3dc3364ec7881bb3d",
+    "title": "fix: preserve unbounded action coordinates in NormalizeAction spaces",
+    "body": "NormalizeAction applies an affine transform only to action coordinates with two finite bounds. Coordinates with an infinite bound pass through unchanged, so their advertised action space must retain the environment's original bounds. The current space incorrectly advertises [-1, 1] for those coordinates and rejects valid actions.\n\nUse the original lower and upper bounds for coordinates outside the normalization mask. Regression coverage checks mixed finite, one-sided, and unbounded intervals, the finite-coordinate affine map, output dtype, and membership in both wrapper and environment spaces.\n\nValidation: 2 native regression tests passed at d3362d6c0e559ec1148c76d3dc3364ec7881bb3d. Restoring the exact upstream production files caused functional regression failures; the original-source comparison guard passed.\n\n```bash\npython -m unittest discover -s embodied/tests -p test_normalize_action_bounds.py -v\n```\n\nExact-head validation: all 2 native CPU regression tests pass at `d3362d6c0e559ec1148c76d3dc3364ec7881bb3d`. Restoring the original production files at `e3f02248693a79dc8b0ebd62c93683888ddaccfe` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37029314505/job/110911840016).",
+    "validation": {
+      "sha": "d3362d6c0e559ec1148c76d3dc3364ec7881bb3d",
+      "run": 37029314505,
+      "job": 110911840016,
+      "tests": 2
+    }
+  },
+  {
+    "id": "vjepa-sampler-epoch",
+    "repo": "facebookresearch/vjepa2",
+    "base": "main",
+    "branch": "fix/oct2-vjepa-sampler-epoch",
+    "sha": "2d6880bc3f75bffcd7457d1403b44dd0db56cfbb",
+    "title": "fix: reseed memory-efficient weighted samplers when changing epochs",
+    "body": "The memory-efficient weighted samplers consume private random-generator and traversal state, but inherit DistributedSampler.set_epoch without resetting that state. Setting an epoch therefore does not reproduce that epoch's sampling sequence, and the ordered sampler can continue partway through the previous traversal.\n\nReset the relevant generators, per-dataset permutations, and traversal counters when setting an epoch. Tests check deterministic epoch replay after prior consumption, distinct epoch sequences, ordered restarts, and disjoint rank index pools.\n\nValidation: 3 native regression tests passed at 2d6880bc3f75bffcd7457d1403b44dd0db56cfbb. Restoring the exact upstream production files caused functional regression failures; the original-source comparison guard passed.\n\n```bash\npython -m unittest discover -s tests/datasets -p test_weighted_sampler_epoch.py -v\n```\n\nExact-head validation: all 3 native CPU regression tests pass at `2d6880bc3f75bffcd7457d1403b44dd0db56cfbb`. Restoring the original production files at `204698b45b3712590f06245fbfba32d3be539812` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905647760).",
+    "validation": {
+      "sha": "2d6880bc3f75bffcd7457d1403b44dd0db56cfbb",
+      "run": 37027462867,
+      "job": 110905647760,
+      "tests": 3
+    }
+  },
+  {
+    "id": "vjepa-singleton-mask",
+    "repo": "facebookresearch/vjepa2",
+    "base": "main",
+    "branch": "fix/oct2-vjepa-singleton-mask",
+    "sha": "95a0eb452ecadb97bd02cd75fbba6579ad94bbc2",
+    "title": "fix: keep singleton encoder and predictor mask indices one-dimensional",
+    "body": "Mask index extraction uses squeeze(), which turns a single selected index into a scalar tensor. The collator then fails when taking its length or assembling batch masks.\n\nFlatten the nonzero indices to retain the token axis for empty, singleton, and larger selections. Tests cover singleton encoder/predictor masks, complement and inverse-block options, valid indices, and batch/token dimensions.\n\nValidation: 3 native regression tests passed at 95a0eb452ecadb97bd02cd75fbba6579ad94bbc2. Restoring the exact upstream production files caused functional regression failures; the original-source comparison guard passed.\n\n```bash\npython -m unittest discover -s tests/models -p test_singleton_mask_indices.py -v\n```\n\nExact-head validation: all 3 native CPU regression tests pass at `95a0eb452ecadb97bd02cd75fbba6579ad94bbc2`. Restoring the original production files at `204698b45b3712590f06245fbfba32d3be539812` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37027462867/job/110905647718).",
+    "validation": {
+      "sha": "95a0eb452ecadb97bd02cd75fbba6579ad94bbc2",
+      "run": 37027462867,
+      "job": 110905647718,
+      "tests": 3
+    }
+  },
+  {
+    "id": "wan-custom-sigma-list",
+    "repo": "Wan-Video/Wan2.2",
+    "base": "main",
+    "branch": "fix/oct2-wan-custom-sigma-list",
+    "sha": "1bd292ad094089f7216c535a95eb02b050bd2cd4",
+    "title": "fix: accept documented Python-list sigma schedules in flow solvers",
+    "body": "The flow schedulers document custom sigmas as a Python list, but set_timesteps applies arithmetic directly to that list. Static and dynamic timestep shifts therefore raise TypeError for the documented input type.\n\nConvert the selected sigma schedule to a NumPy array before applying either shift. Tests check Python-list and NumPy-array parity, independent static and dynamic shift formulas, terminal sigma handling, and retrieve_timesteps integration.\n\nValidation: 3 native regression tests passed at 1bd292ad094089f7216c535a95eb02b050bd2cd4. Restoring the exact upstream production files caused functional TypeErrors; the original-source comparison guard passed.\n\n```bash\npython -m unittest discover -s tests -p test_custom_sigma_schedule.py -v\n```\n\nExact-head validation: all 3 native CPU regression tests pass at `1bd292ad094089f7216c535a95eb02b050bd2cd4`. Restoring the original production files at `1ea34ff48f87168174e12956e200b1d908b1c5ff` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37029314505/job/110911839688).",
+    "validation": {
+      "sha": "1bd292ad094089f7216c535a95eb02b050bd2cd4",
+      "run": 37029314505,
+      "job": 110911839688,
+      "tests": 3
+    }
+  },
+  {
+    "id": "wan-flow-noise",
+    "repo": "Wan-Video/Wan2.2",
+    "base": "main",
+    "branch": "fix/oct2-wan-flow-noise",
+    "sha": "78f1cd9b98054ecc18d07ada3133b04d12dffbdf",
+    "title": "fix: correct flow velocity conversion to noise prediction",
+    "body": "For a flow trajectory x_sigma = (1 - sigma) * x0 + sigma * epsilon with velocity v = epsilon - x0, noise prediction is epsilon = x_sigma + (1 - sigma) * v. The optional noise-prediction branches in the DPM and UniPC schedulers currently subtract that velocity term and return the wrong endpoint.\n\nCorrect the conversion sign in both schedulers. Native tests independently construct data/noise endpoints across sigma in [0, 1], check the default data-prediction branch, and verify sample/velocity gradients. Coverage concerns the conversion boundary; it does not claim an end-to-end trajectory for the optional noise-prediction solvers.\n\nValidation: 3 native regression tests passed at 78f1cd9b98054ecc18d07ada3133b04d12dffbdf. Restoring the exact upstream production files caused functional regression failures; the original-source comparison guard passed.\n\n```bash\npython -m unittest discover -s tests -p test_flow_noise_conversion.py -v\n```\n\nExact-head validation: all 3 native CPU regression tests pass at `78f1cd9b98054ecc18d07ada3133b04d12dffbdf`. Restoring the original production files at `1ea34ff48f87168174e12956e200b1d908b1c5ff` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37029314505/job/110911839800).",
+    "validation": {
+      "sha": "78f1cd9b98054ecc18d07ada3133b04d12dffbdf",
+      "run": 37029314505,
+      "job": 110911839800,
+      "tests": 3
+    }
+  },
+  {
+    "id": "wan-video-backend",
+    "repo": "Wan-Video/Wan2.2",
+    "base": "main",
+    "branch": "fix/oct2-wan-video-backend",
+    "sha": "a6bcb5b10e7ed15ae2ff22c29dceca990740d636",
+    "title": "fix: use supported logging arguments when selecting the video reader",
+    "body": "Selecting a video reader calls logger.info with file=sys.stderr, a print-only keyword. When INFO logging is enabled, backend selection raises TypeError before video decoding starts.\n\nUse the supported logging call and remove the unused sys import. Tests exercise automatic and forced backend selection with native INFO logging, then check fetch_video reader dispatch and native Torchvision resizing. The decoder boundary is replaced with a deterministic tensor fixture.\n\nValidation: 2 native regression tests passed at a6bcb5b10e7ed15ae2ff22c29dceca990740d636. Restoring the exact upstream production files caused functional regression failures; the original-source comparison guard passed.\n\n```bash\npython -m unittest discover -s tests -p test_video_reader_backend.py -v\n```\n\nExact-head validation: all 2 native CPU regression tests pass at `a6bcb5b10e7ed15ae2ff22c29dceca990740d636`. Restoring the original production files at `1ea34ff48f87168174e12956e200b1d908b1c5ff` makes the same complete suite fail on the original behavior, with no skipped tests or import failures. [Candidate and original-source logs](https://github.com/Afloat16/vggt/actions/runs/37029314505/job/110911839969).",
+    "validation": {
+      "sha": "a6bcb5b10e7ed15ae2ff22c29dceca990740d636",
+      "run": 37029314505,
+      "job": 110911839969,
+      "tests": 2
+    }
+  }
+]
