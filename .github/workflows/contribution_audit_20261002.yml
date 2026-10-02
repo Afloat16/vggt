@@ -1,0 +1,79 @@
+name: Core contribution regression audit
+on:
+  push:
+    branches:
+      - validation/contribution-audit-20261002
+permissions:
+  contents: read
+jobs:
+  regression:
+    name: ${{ matrix.id }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - id: "qwen-odinw-empty"
+            repository: "Afloat16/Qwen3-VL"
+            ref: "1a7ebef4cdd1f3ba85be045048eb34181642d788"
+            base: "96588727e44c78b25ba03ea03b8e12f7e64fd0da"
+            test: "evaluation/ODinW-13/tests/test_empty_detections.py"
+            sources: "[\"evaluation/ODinW-13/eval_utils.py\"]"
+            count: 3
+            transformers: "4.57.1"
+          - id: "qwen-vision-learning-rate"
+            repository: "Afloat16/Qwen3-VL"
+            ref: "a3fa47d6f08af2aed59839a916bcc95478da22b2"
+            base: "96588727e44c78b25ba03ea03b8e12f7e64fd0da"
+            test: "qwen-vl-finetune/tests/test_vision_learning_rate.py"
+            sources: "[\"qwen-vl-finetune/qwenvl/train/trainer.py\"]"
+            count: 4
+            transformers: "4.57.1"
+    steps:
+      - name: Checkout validation runner
+        uses: actions/checkout@v4
+        with:
+          path: audit
+      - name: Checkout exact candidate commit
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          ref: ${{ matrix.ref }}
+          fetch-depth: 0
+          path: candidate
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install CPU tensor runtime
+        run: python -m pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cpu
+      - name: Install native import dependencies
+        run: >-
+          python -m pip install numpy==1.26.4 scipy==1.15.3
+          einops==0.8.1 diffusers==0.35.1 transformers==${{ matrix.transformers }}
+          accelerate==1.10.1 omegaconf==2.3.0 iopath==0.1.10
+          opencv-python-headless==4.11.0.86 easydict==1.13 ftfy==6.3.1
+          zarr==2.18.7 numcodecs==0.15.1 dill==0.4.0 pandas==2.2.3
+          scikit-learn==1.6.1 h5py==3.14.0 imageio==2.37.0 imageio-ffmpeg==0.6.0 termcolor==3.1.0 matplotlib==3.10.1 psutil==7.0.0 pycocotools==2.0.10 numba==0.61.2 IPython==8.37.0 packaging==25.0
+      - name: Verify native candidate and original baseline
+        working-directory: candidate
+        env:
+          PYTHONPATH: .:training:qwen-vl-finetune
+          OMP_NUM_THREADS: '1'
+          MKL_NUM_THREADS: '1'
+          CANDIDATE_TEST: ${{ matrix.test }}
+          CANDIDATE_BASE: ${{ matrix.base }}
+          CANDIDATE_SOURCES: ${{ matrix.sources }}
+          CANDIDATE_COUNT: ${{ matrix.count }}
+        run: >-
+          python ../audit/validation/validate_candidate.py
+          --test "$CANDIDATE_TEST" --base "$CANDIDATE_BASE"
+          --sources "$CANDIDATE_SOURCES" --count "$CANDIDATE_COUNT"
+      - name: Upload validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-${{ matrix.id }}
+          path: candidate/*result.json
